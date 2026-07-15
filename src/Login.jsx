@@ -30,6 +30,13 @@ function InputTab(){
     const [password,setPassword] = useState('');
     return (
         <div className={"loginDiv"}>
+            <h1 style={{color:"Green",
+                        fontSize:"9rem",
+                        position:"absolute",
+                        left:"2vw"}}
+            >
+                Sentinel Flow
+            </h1>
             <input className={"inputField"}
                    type={"text"}
                    placeholder={"Enter your username"}
@@ -45,11 +52,14 @@ function InputTab(){
             >
                 Log in
             </button>
-            <span>
-                Don't have an account?
-                <button id={"signUpBtn"}value={"Sign up"}>Sign up</button>
-                here on SentinelFlow
-            </span>
+            <div id={"signUpContainer"}>
+                <h2>Don't have an account?
+                <button id={"signUpBtn"} value={"Sign up"}
+                        onClick={()=>console.log("url to signup")}
+                >Sign up
+                </button>
+                    here on SentinelFlow</h2>
+            </div>
         </div>
     )
 }
@@ -67,10 +77,6 @@ function LoginPageCarousell({slides}){
                  src={slides[slide].visual}
                  alt={`Image ${slide + 1}`}
             />
-            <div className={"slideTextContainer"}>
-                <p className={"slideTitle"}>{slides[slide].title}</p>
-                <h2 className={"slideDescription"}>{slides[slide].description}</h2>
-            </div>
         </div>
     );
 }

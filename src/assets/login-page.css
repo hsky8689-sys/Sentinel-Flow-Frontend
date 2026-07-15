@@ -59,8 +59,14 @@ body {
 }
 #signUpBtn{
     background-color: transparent;
-    border: transparent;
+    border: none;
+    color:greenyellow;
     font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 5px;
+    text-decoration: underline;
+    transition: color 0.2s ease;
 }
 .loginBtn:hover{
 
@@ -71,6 +77,7 @@ body {
     min-height: var(--input-max-height);
     font-size: calc(var(--input-max-height)*0.30);
     background-color: darkgrey;
+    padding-left:20px;
 }
 .carousel{
     display: var(--carousel-display);
@@ -83,37 +90,21 @@ body {
     min-width: var(--slide-image-max-width);
     border-radius: 10px;
 }
-.slideTextContainer{
-    position: fixed;
-    bottom: 10vh;
-    right: 5vw;
-    background-color: rgba(0, 0, 0, 0.7);
-    border: 10px green solid;
-    border-radius: 10px;
-    /*max-width: 30vh;
-    width: 100%;*/
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    z-index: 10;
-    pointer-events: none;
-    width: var(--info-square-height);
-    height: var(--info-square-width);
+.inputField:focus {
+    outline: none;
+    border-color: #00ff33;
+    box-shadow: 0 0 8px rgba(0, 255, 51, 0.5);
 }
-.slideTitle{
-    font-family: "Syne", sans-serif;
-    font-size: 100px;
-    color: white;
-    margin:0 0 10px 0;
-    font-weight: bold;
-    overflow-wrap:break-word;
+#signUpContainer{
+    border-radius:7px;
+    border:3px green solid;
+    padding:15px;
+    margin-top:15px;
+    text-align: center;
 }
-.slideDescription{
-    font-family: "Inter", sans-serif;
+#signUpContainer h2{
     color: #e0e0e0;
-    font-size: 50px;
+    font-size: 1.5em;
+    font-weight: normal;
     margin: 0;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
 }
