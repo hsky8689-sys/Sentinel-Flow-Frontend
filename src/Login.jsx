@@ -1,5 +1,6 @@
 import { useState,useEffect } from 'react'
-import {tryLogin,signUp} from './utils/login-signup-utils.js'
+import { Link } from 'react-router-dom';
+import {tryLogin} from './utils/login-signup-utils.js'
 import './assets/login-page.css'
 import slide1 from './assets/slide_image_1.png';
 import slide2 from './assets/slide_image_2.png';
@@ -30,11 +31,15 @@ function InputTab(){
     const [password,setPassword] = useState('');
     return (
         <div className={"loginDiv"}>
-            <h1 style={{color:"Green",
-                        fontSize:"9rem",
-                        position:"absolute",
-                        left:"2vw"}}
-            >
+            <h1 style={{
+                fontFamily: "'Orbitron', sans-serif",
+                color: "green",
+                fontSize: "9rem",
+                textAlign: "center",
+                margin: "0 auto 40px auto",
+                textTransform: "uppercase",
+                letterSpacing: "6px"
+            }}>
                 Sentinel Flow
             </h1>
             <input className={"inputField"}
@@ -53,39 +58,90 @@ function InputTab(){
                 Log in
             </button>
             <div id={"signUpContainer"}>
-                <h2>Don't have an account?
-                <button id={"signUpBtn"} value={"Sign up"}
-                        onClick={()=>console.log("url to signup")}
-                >Sign up
-                </button>
-                    here on SentinelFlow</h2>
+                <p style={{ margin: 0, fontFamily: 'monospace', color: 'greenyellow' }}>
+                    You don't have an account, then{' '}
+                    <Link to="/signup" id="signup"
+                          style={{margin:'0 5px',underline:'none'}}>
+                        sign up
+                    </Link>
+                    {' '}on sentinel flow
+                </p>
             </div>
         </div>
     )
 }
-function LoginPageCarousell({slides}){
+function LoginPageCarousell({slides,slide,setSlide,timer,setTimer}) {
     const slidesSize = slides.length;
-    const [slide,setSlide] = useState(0);
+    function changeSlide(left){
+        if(typeof left !== "boolean"){
+            return;
+        }
+        setSlide((slidesSize +slide + (left ? -1 : 1))%slidesSize);
+        setTimer(10000);
+    }
     useEffect(() => {
-        setTimeout(()=>{
-            setSlide((slide+1)%slidesSize);
-        },6000);
-    }, [slide]);
+        const interval = setInterval(() => {
+            setSlide((prevSlide) => (prevSlide + 1) % slidesSize);
+        }, timer);
+        return () => clearInterval(interval);
+    }, [slidesSize,timer]);
+
     return (
-        <div>
-            <img className={"slideImage"}
-                 src={slides[slide].visual}
-                 alt={`Image ${slide + 1}`}
+        <div className={"carousel"}>
+            <div className={"carouselWrapper"}>
+            <button id={"rightChange"}
+                    onClick={()=>changeSlide(false)}/>
+            <img
+                key={slide}
+                className="slideImage active"
+                src={slides[slide].visual}
+                alt={`Image ${slide + 1}`}
             />
+            <button id={"leftChange"}
+                    onClick={()=>changeSlide(true)}/>
+            </div>
         </div>
     );
 }
-
+function BottomDotList({slide,setSlide,setTimer}){
+    const slidesSize = slides.length;
+    const handleDotClick = (index) => {
+        setSlide(index);
+        setTimer(10000);
+    };
+    return (
+        <div className="dotsContainer">
+            {Array.from({ length: slidesSize }, (_, i) => {
+                const isActive = i === slide;
+                return (
+                    <div
+                        key={i}
+                        id={`dot-${i}`}
+                        className={`bottomDot ${isActive ? 'active' : ''}`}
+                        onClick={() => handleDotClick(i)}
+                    ></div>
+                );
+            })}
+        </div>
+    );
+}
 function LoginPage() {
+    const [slide, setSlide] = useState(0);
+    const [timer,setTimer] = useState(10000);
     return (
         <div id={"loginMainContainer"}>
             <InputTab/>
-            <LoginPageCarousell slides={slides}/>
+            <div>
+                <LoginPageCarousell slides={slides}
+                                    slide={slide}
+                                    timer={timer}
+                                    setSlide={setSlide}
+                                    setTimer={setTimer}
+            />
+            <BottomDotList slide={slide}
+                           setSlide={setSlide}
+                           setTimer={setTimer}/>
+            </div>
         </div>
     );
 }

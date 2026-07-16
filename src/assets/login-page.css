@@ -10,6 +10,16 @@
     --info-square-height:calc(var(--screen-h)*0.4);
     --info-square-width:calc(var(--screen-w)*0.2);
 }
+*, *::before, *::after {
+    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
 body {
     background-color: #030708;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath d='M0 0h120v120H0z' fill='%23030708'/%3E%3Cpath d='M0 60h120M60 0v120' stroke='%23004411' stroke-width='0.5'/%3E%3Cpath d='M30 30h60v60H30z' fill='none' stroke='%23005511' stroke-width='0.5' stroke-dasharray='4 4'/%3E%3Ccircle cx='60' cy='60' r='3' fill='%2300ff33' opacity='0.4'/%3E%3Ccircle cx='30' cy='30' r='1.5' fill='%2300ff33' opacity='0.2'/%3E%3Ccircle cx='90' cy='30' r='1.5' fill='%2300ff33' opacity='0.2'/%3E%3Ccircle cx='30' cy='90' r='1.5' fill='%2300ff33' opacity='0.2'/%3E%3Ccircle cx='90' cy='90' r='1.5' fill='%2300ff33' opacity='0.2'/%3E%3Ctext x='15' y='25' fill='%2300ff33' font-family='monospace' font-size='8' opacity='0.15'%3E01%3C/text%3E%3Ctext x='85' y='75' fill='%2300ff33' font-family='monospace' font-size='8' opacity='0.15'%3E10%3C/text%3E%3Ctext x='10' y='110' fill='%2300ff33' font-family='monospace' font-size='8' opacity='0.15'%3E1%3C/text%3E%3Ctext x='105' y='20' fill='%2300ff33' font-family='monospace' font-size='8' opacity='0.15'%3E0%3C/text%3E%3C/svg%3E");
@@ -34,17 +44,16 @@ body {
     display: grid;
     background-color: black;
     border: 10px green solid;
-    border-radius: 10px;
+    border-radius: 1%;
     padding: 30px;
     margin: 10px;
-    position: relative;
-    bottom: 1%;
-    right: 12px;
+    flex: 0 0 var(--login-max-width);
+    width: var(--login-max-width);
+    box-sizing: border-box;
     min-height: 85vh;
-    width:var(--login-max-width);
-    max-width: 40%;
     gap:15px;
     align-content: center;
+    color: greenyellow;
 }
 #loginBtn{
     border:2px black solid;
@@ -68,27 +77,39 @@ body {
     text-decoration: underline;
     transition: color 0.2s ease;
 }
-.loginBtn:hover{
-
-}
 .inputField{
     border-radius: 10px;
-    border: 5px solid darkgreen;
+    border: 10px solid darkgreen;
     min-height: var(--input-max-height);
-    font-size: calc(var(--input-max-height)*0.30);
-    background-color: darkgrey;
-    padding-left:20px;
+    font-size: calc(var(--input-max-height) * 0.30);
+    background-color: #0a0e10;
+    padding-left: 20px;
+    color: greenyellow;
+    margin: 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
 }
 .carousel{
     display: var(--carousel-display);
+    flex: 0 0 var(--slide-image-max-width);
+    width: var(--slide-image-max-width);
+    height: var(--slide-image-max-height);
 }
 #loginMainContainer{
     display: flex;
+    width:var(--screen-w);
+    height:var(--screen-h);
+    padding: 40px;
+    align-items: center;
+    justify-content: space-between;
+    overflow:hidden;
 }
 .slideImage{
     min-height: var(--slide-image-max-height);
     min-width: var(--slide-image-max-width);
     border-radius: 10px;
+    animation: cyberFadeIn 4.5s ease-in-out forwards;
 }
 .inputField:focus {
     outline: none;
@@ -96,10 +117,12 @@ body {
     box-shadow: 0 0 8px rgba(0, 255, 51, 0.5);
 }
 #signUpContainer{
+    bottom: 3px;
     border-radius:7px;
     border:3px green solid;
     padding:15px;
     margin-top:15px;
+    font-size: 3em;
     text-align: center;
 }
 #signUpContainer h2{
@@ -107,4 +130,108 @@ body {
     font-size: 1.5em;
     font-weight: normal;
     margin: 0;
+}
+.dotsContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 15px;
+    width: 100%;
+}
+.bottomDot {
+    width: 12px;
+    height: 12px;
+    background-color: black;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bottomDot:hover {
+    transform: scale(1.2);
+    border-color: greenyellow;
+}
+.bottomDot.active {
+    border-color: greenyellow;
+    animation: dotBlackWhite 0.4s forwards ease-in-out;
+    box-shadow: 0 0 8px rgba(173, 255, 47, 0.6);
+}
+@keyframes dotBlackWhite {
+    from{
+        background-color: black;
+    }
+    to{
+        background-color: white;
+    }
+}
+@keyframes cyberFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+.carousel-container {
+    position: relative;
+    width: 30vw;
+    height: 10vh;
+    margin: 0 auto;
+    overflow: hidden;
+}
+.slideImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+#leftChange, #rightChange {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    z-index: 10;
+    border-radius: 8px;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 28px;
+    transition: all 0.2s ease;
+    background-color: rgba(3, 15, 30, 0.85);
+    border: 1px solid rgba(0, 26, 51, 0.8);
+    filter: invert(11%) sepia(30%) saturate(6689%) hue-rotate(193deg) brightness(91%) contrast(101%);
+}
+#leftChange {
+    left: 15px;
+    background-image: url("https://api.iconify.design/lucide:chevron-left.svg?color=%23ffffff");
+}
+#rightChange {
+    right: 0;
+    background-image: url("https://api.iconify.design/lucide:chevron-right.svg?color=%23ffffff");
+}
+#leftChange:hover, #rightChange:hover {
+    background-color: rgba(173, 255, 47, 0.15);
+    border: 1px solid rgba(173, 255, 47, 1);
+    box-shadow: 0 0 12px rgba(173, 255, 47, 0.6);
+    filter: invert(87%) sepia(48%) saturate(1471%) hue-rotate(41deg) brightness(109%) contrast(105%);
+}
+#signup {
+    text-decoration: none !important;
+    color:green;
+}
+#signup:hover {
+    text-decoration: underline !important;
+    color: #00ff33;
+}
+.carousel{
+    display: var(--carousel-display);
+    flex:0 0 var(--slide-image-max-width);
+    width: var(--slide-image-max-width);
+    height:var(--slide-image-max-height);
+}
+.carouselWrapper{
+    position:relative;
+    width: 100%;
+    height: 100%;
 }
