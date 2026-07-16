@@ -69,7 +69,7 @@ function LoginPageCarousell({slides}){
     useEffect(() => {
         setTimeout(()=>{
             setSlide((slide+1)%slidesSize);
-        },4500);
+        },6000);
     }, [slide]);
     return (
         <div>
