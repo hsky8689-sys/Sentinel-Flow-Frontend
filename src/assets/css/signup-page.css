@@ -1,0 +1,112 @@
+.pageWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: var(--screen-w);
+    height: var(--screen-h);
+    margin: 0 auto;
+}
+.signUpDiv {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: var(--div-width);
+    min-height: var(--div-height);
+    border: var(--border);
+    border-radius: 8px;
+    background-color: rgba(3, 7, 8, 0.9); 
+    padding: 40px;
+    gap: 3vh;
+    box-shadow: 0 0 20px rgba(0, 255, 51, 0.15);
+}
+
+.signUpTitle {
+    color: greenyellow;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 1vh;
+    letter-spacing: 2px;
+}
+
+.inputField {
+    width: 100%;              
+    max-width: var(--input-width);
+    height: var(--input-height);
+    border-radius: 5px;
+    border: 2px solid #004411;
+    background-color: #0d0d0d;
+    color: #fff;
+    padding: 0 15px;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.inputField:focus {
+    border-color: greenyellow;
+    box-shadow: 0 0 10px rgba(173, 255, 47, 0.2);
+}
+
+#birthdayPicker {
+    background-color: #0d0d0d;
+    color: #00ff66;
+    border: 2px solid #004411;
+    border-radius: 5px;
+    outline: none;
+    transition: all 0.3s ease;
+    
+    width: 100%;
+    max-width: var(--input-width); 
+    height: var(--input-height);   
+    box-sizing: border-box;
+    
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    padding: 0 15px;            
+}
+
+#birthdayPicker:focus {
+    border-color: greenyellow;
+    box-shadow: 0 0 10px rgba(173, 255, 47, 0.2);
+}
+
+
+#birthdayPicker::-webkit-datetime-edit {
+    color: #00ff66;
+    display: flex !important;
+    align-items: center;
+    height: 100%;
+}
+
+#birthdayPicker::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(118deg) brightness(118%) contrast(119%);
+    opacity: 0.8;
+}
+
+
+#signUpBtn {
+    border: 2px black solid;
+    height: auto; 
+    width: 100%;
+    max-width: calc(var(--input-width) / 1.5);
+    
+    font-size: 1.2rem; 
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    padding: 10px 20px;
+    margin-top: 10px;
+    
+    cursor: pointer;
+    background-color: greenyellow;
+    color: #000;
+    border-radius: 7px;
+    transition: all 0.2s ease;
+}
+
+#signUpBtn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(173, 255, 47, 0.4);
+}

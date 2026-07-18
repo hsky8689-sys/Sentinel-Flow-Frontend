@@ -1,7 +1,8 @@
 import { useState,useEffect } from 'react'
 import { Link } from 'react-router-dom';
 import {tryLogin} from './utils/login-signup-utils.js'
-import './assets/login-page.css'
+import './assets/css/login-page.css'
+import './assets/css/rootStyles.css'
 import slide1 from './assets/slide_image_1.png';
 import slide2 from './assets/slide_image_2.png';
 import slide3 from './assets/slide_image_3.png';
@@ -31,35 +32,37 @@ function InputTab(){
     const [password,setPassword] = useState('');
     return (
         <div className={"loginDiv"}>
-            <h1 style={{
-                fontFamily: "'Orbitron', sans-serif",
-                color: "green",
-                fontSize: "9rem",
-                textAlign: "center",
-                margin: "0 auto 40px auto",
-                textTransform: "uppercase",
-                letterSpacing: "6px"
-            }}>
-                Sentinel Flow
-            </h1>
-            <input className={"inputField"}
-                   type={"text"}
-                   placeholder={"Enter your username"}
-                   onChange={(e)=>setUsername(e.target.value)}
-            />
-            <input className={"inputField"}
-                   type={"password"}
-                   placeholder={"Enter your password"}
-                   onChange={(e)=>setPassword(e.target.value)}
-            />
-            <button id={"loginBtn"}
-                    onClick={()=>tryLogin(username,password)}
-            >
-                Log in
-            </button>
+            <div className='innerLogin'>
+                <h1 style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    color: "green",
+                    fontSize: "2rem",
+                    textAlign: "center",
+                    margin: "0 auto 40px auto",
+                    textTransform: "uppercase",
+                    letterSpacing: "6px"
+                }}>
+                    Sentinel Flow
+                </h1>
+                <input className={"inputField"}
+                    type={"text"}
+                    placeholder={"Enter your username"}
+                    onChange={(e)=>setUsername(e.target.value)}
+                />
+                <input className={"inputField"}
+                    type={"password"}
+                    placeholder={"Enter your password"}
+                    onChange={(e)=>setPassword(e.target.value)}
+                />
+                <button id={"loginBtn"}
+                        onClick={()=>tryLogin(username,password)}
+                >
+                    Log in
+                </button>
+            </div>
             <div id={"signUpContainer"}>
-                <p style={{ margin: 0, fontFamily: 'monospace', color: 'greenyellow' }}>
-                    You don't have an account, then{' '}
+                <p>
+                    If you don't have an account, then{' '}
                     <Link to="/signup" id="signup"
                           style={{margin:'0 5px',underline:'none'}}>
                         sign up
@@ -103,11 +106,11 @@ function LoginPageCarousell({slides,slide,setSlide,timer,setTimer}) {
         </div>
     );
 }
-function BottomDotList({slide,setSlide,setTimer}){
+function BottomDotList({slide,timer,setSlide,setTimer}){
     const slidesSize = slides.length;
     const handleDotClick = (index) => {
         setSlide(index);
-        setTimer(10000);
+        setTimer(timer);
     };
     return (
         <div className="dotsContainer">
@@ -137,8 +140,9 @@ function LoginPage() {
                                     timer={timer}
                                     setSlide={setSlide}
                                     setTimer={setTimer}
-            />
+                />
             <BottomDotList slide={slide}
+                           timer={timer}
                            setSlide={setSlide}
                            setTimer={setTimer}/>
             </div>

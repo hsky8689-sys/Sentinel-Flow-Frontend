@@ -18,7 +18,7 @@ export async function getCookie() {
     let cookie = searchCookie('csrftoken');
     if (cookie === null) {
         try {
-            const response = await axios.get(`${BASE_URL}/users/api/csrf-token/`, {
+            const response = await axios.get(`${BASE_URL}/users/api/csrf-token`, {
                 withCredentials: true
             });
             if (response && response.data) {
