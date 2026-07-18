@@ -1,4 +1,4 @@
-import { useState,useEffect } from 'react'
+import { useState,useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom';
 import {tryLogin} from './utils/login-signup-utils.js'
 import './assets/css/login-page.css'
@@ -33,15 +33,7 @@ function InputTab(){
     return (
         <div className={"loginDiv"}>
             <div className='innerLogin'>
-                <h1 style={{
-                    fontFamily: "'Orbitron', sans-serif",
-                    color: "green",
-                    fontSize: "2rem",
-                    textAlign: "center",
-                    margin: "0 auto 40px auto",
-                    textTransform: "uppercase",
-                    letterSpacing: "6px"
-                }}>
+                <h1 className='logoText'>
                     Sentinel Flow
                 </h1>
                 <input className={"inputField"}
@@ -80,22 +72,31 @@ function LoginPageCarousell({slides,slide,setSlide,timer,setTimer}) {
             return;
         }
         setSlide((slidesSize +slide + (left ? -1 : 1))%slidesSize);
-        setTimer(10000);
+        setTimer(4000);
     }
+    const imageRef = useRef(null);
     useEffect(() => {
         const interval = setInterval(() => {
             setSlide((prevSlide) => (prevSlide + 1) % slidesSize);
         }, timer);
         return () => clearInterval(interval);
     }, [slidesSize,timer]);
-
+    useEffect(()=>{
+        const imageElem = imageRef.current;
+        if(imageElem){
+            imageElem.classList.remove('activeAnimation');
+            void imageElem.offsetWidth;
+            imageElem.classList.add('activeAnimation');
+        }
+    },[slide]);
     return (
         <div className={"carousel"}>
             <div className={"carouselWrapper"}>
             <button id={"rightChange"}
                     onClick={()=>changeSlide(false)}/>
             <img
-                key={slide}
+                ref={imageRef}
+                id="imageSlide"
                 className="slideImage active"
                 src={slides[slide].visual}
                 alt={`Image ${slide + 1}`}
