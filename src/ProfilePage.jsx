@@ -1,13 +1,9 @@
 import {useEffect, useState} from 'react'
 import './assets/css/ProfilePage.css'
-import { useParams,useNavigate } from 'react-router-dom';
+import { useParams,useNavigate,Link } from 'react-router-dom';
 import { accesProfilePage } from './utils/api-utlis';
 import { useRef } from 'react';
 const BASE_URL = import.meta.env.VITE_API_URL;
-function Username(){
-   const {username} = useParams();
-   return <h1>{username}</h1>
-}
 function FriendshipStatusButton({userData}){
   /*
   Displays => the Send request button if an user enters a non friend's page,
@@ -27,79 +23,93 @@ function FriendshipStatusButton({userData}){
     return;
   }
   else if(sentToHim){
-    return (<input type={"button"}
-                   onClick={null}
-            >
-              Cancel request
-            </input>);
+    return (<button onClick={null}>Cancel request</button>);
   }
   else if(receivedFromHim){
-    return (<div>
-              <input type={"button"}
-                     onClick={null}
-              >
+    return (<div className='acceptOrDenyRequest'>
+              <button id='acceptBtn' onClick={null}>
                 Accept
-              </input>
-              <input type={"button"}
+              </button>
+              <button type={"button"}
                    onClick={null}
               >
                 Deny
-              </input>
+              </button>
+            </div>);
+  }
+  else{
+    return (<div>
+                <button id='sendBtn'>Send friend request</button>
             </div>);
   }
   return;
 }
 function makeBgStyle({backgroundImageUrl}){
   return {
-          display:'flex',
-          padding:'2px',
-          marginLeft:'2vw',
-          marginRight:'2vw',
-          borderRadius:'10px',
           backgroundImage: `url(${backgroundImageUrl})`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          width: '95vw',
-          height: '25vh',
-          borderRadius: '12px'};
+          backgroundPosition: 'center'};
 }
 function UpperContainer({data}){
-  const bgUrl = data.background_pictureck;
+  const bgUrl = data.background_picture;
+  const url = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop';
+  const {username} = useParams();
   return (
-        <div id={"backgroundPicture"}
-             style={makeBgStyle({backgroundImageUrl:bgUrl})}
-        >
-          <div id={"imageWrapper"}>
-              <div id={"pfp"}>
-                  <img src={bgUrl} 
-                       alt={"poza profil"}>
-                  </img>
-                  <FriendshipStatusButton userData={null}/>
-              </div>
-          </div>
-        </div> 
+        <div id={"backgroundPicture"} style={makeBgStyle({backgroundImageUrl:url})}>
+                <div id={"pfp"}>
+                    <img src={bgUrl} 
+                        alt={"poza profil"}>
+                    </img>
+                </div>
+                <h1 id='usernameHeader'>{username}</h1>
+                <FriendshipStatusButton userData={data}/>
+                <button id='chatBtn'>Message user</button>
+        </div>
   );
 }
 function UserTechStack({data,isOwner}){
+  const [selectedSection, setSelectedSection] = useState('');
+  const techSections = data ? Object.entries(data) : [];
+  useEffect(() => {
+    if(techSections.length > 0){
+      setSelectedSection(techSections[0][0]);
+    }
+  }, [data]);
   if(!data)return null;
-  const techSections = Object.entries(data);
   return (
     <div id="techStackContainer">
       {techSections.map(([sectionName, skills]) => (
         <div key={sectionName} className="techSectionBox">
-          <h3 className="sectionTitle">{sectionName}</h3>
-          
+          <span className="sectionTitleRow">
+            <h3 className="sectionTitle">{sectionName}</h3>
+            {isOwner && (<button className='deleteBtn'>X</button>)}
+          </span>
           <div className="skillsGrid">
             {skills.map(skill => (
-              <span key={skill} className="skillBadge">
+            <span key={skill} className="skillBadge">
+              <span>
                 {skill}
               </span>
+              {isOwner && (<button className='deleteBtn'>X</button>)}
+            </span>
             ))}
           </div>
         </div>
       ))}
       {isOwner && (
-        <input type="text" placeholder="add new section..." className="addSectionInput"/>
+        <div className="techStackActions">
+          <select
+            className="sectionSelect"
+            value={selectedSection}
+            onChange={(e) => setSelectedSection(e.target.value)}
+          >
+            {techSections.map(([sectionName]) => (
+              <option key={sectionName} value={sectionName}>{sectionName}</option>
+            ))}
+          </select>
+          <input type="text" placeholder="add new section..." className="addSectionInput"/>
+          <input type="text" placeholder="add new skill to section" className="addSkillInput"/>
+        </div>
       )}
     </div>
   );
@@ -114,16 +124,21 @@ function UserProfileSections({owner,sections}){
             return (
                 <div key={id} className='sectionTitle'>
                   <h2>{name}</h2>
-                  {owner && <button>X</button>}
                   <span className='sectionContent'>{content}</span>
+                  {owner && (
+                    <div>
+                      <button className='deleteBtn'>X</button>
+                      <button className='editBtn'>Edit</button></div>
+                    )}
                 </div>
             );
           })
           }
           {owner && <div className="addNewSection">
-            <input type='text' placeholder='Add a title for the new section...'/>
-            <input type='text' placeholder='Add content for the new section...'/>
-            <button>Add new section</button>
+            <input className='sectionTitleInput' type='text' placeholder='Add a title for the new section...'/>
+            <textarea className='sectionContentInput' 
+                      placeholder='Add content for the new section...'/>
+            <button className='addBtn'>Add new section</button>
           </div>
           }
         </div>
@@ -136,8 +151,8 @@ function UserProjects({projects}){
             {userProjects.map(([key,objectData])=>{
                 const {name,description} = objectData;
                 return (
-                  <div className='projectSection'>
-                    <h2>{name}</h2>
+                  <div key={`project-${name}`}className='projectSection'>
+                    <h2><Link to={`/projects/${name}`} style={{textDecoration:"none"}}>{name}</Link></h2>
                     <h3>{description}</h3>
                   </div>
                 );
@@ -166,7 +181,8 @@ function ProfilePage() {
         friends: profileData.friends,
         friendshipRequestId: profileData.friendship_request_id,
         profile_picture: `${BASE_URL}${profileData.user_avatar}`,
-        background_picture: `${BASE_URL}${profileData.background_picture}`
+        background_picture: `${BASE_URL}${profileData.background_picture}`,
+        isOwner:profileData.is_owner
     };
     const techStack = profileData.techstack_category;
     const isOwner = profileData.is_owner;
