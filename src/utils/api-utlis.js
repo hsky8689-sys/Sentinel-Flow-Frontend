@@ -31,3 +31,35 @@ export async function getCookie() {
     }
     return cookie;
 }
+export async function accesProfilePage(username){
+    try{
+        let cookie = searchCookie('csrftoken');
+        const response = await axios.get(`${BASE_URL}/users/${username}`,{
+            headers: {
+                'X-CSRFToken': cookie
+            },
+            withCredentials: true
+        });
+        if (response && response.data) {
+            return response.data;
+        }
+    }catch (error) {
+        console.log(`Could not fetch profile data for user ${username}`);
+    }
+    return;
+}
+export async function deleteSkill(skillId){
+    try{
+        let cookie = searchCookie('csrftoken');
+        const response = await axios.delete(`${BASE_URL}/skills/${skillId}`,{
+            headers: {
+                'X-CSRFToken': cookie
+            },
+            withCredentials: true
+        });
+        const status = response.data.status;
+        alert(status);
+    }catch (error) {
+        console.log(`Could not delete skill with id ${skillId}`);
+    }
+}

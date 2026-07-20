@@ -1,5 +1,5 @@
 import { useState,useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom';
+import { Link,useNavigate } from 'react-router-dom';
 import {tryLogin} from './utils/login-signup-utils.js'
 import './assets/css/login-page.css'
 import './assets/css/rootStyles.css'
@@ -10,6 +10,7 @@ import "@fontsource/inter/400.css";
 import "@fontsource/inter/700.css";
 import "@fontsource/syne/700.css";
 import "@fontsource/syne/800.css";
+const CLIENT_URL = import.meta.env.VITE_BASE_FRONTEND_URL;
 const slides = [
     {
         title: "Instant Repository Sync",
@@ -30,6 +31,7 @@ const slides = [
 function InputTab(){
     const [username,setUsername] = useState('');
     const [password,setPassword] = useState('');
+    const navigate = useNavigate();
     return (
         <div className={"loginDiv"}>
             <div className='innerLogin'>
@@ -47,7 +49,12 @@ function InputTab(){
                     onChange={(e)=>setPassword(e.target.value)}
                 />
                 <button id={"loginBtn"}
-                        onClick={()=>tryLogin(username,password)}
+                        onClick={async ()=>{
+                            const resp = await tryLogin(username,password);
+                            if(resp && resp.status === 'success' && resp.user){
+                                navigate(`/user-profile/${resp.user.username}`);
+                            }
+                        }}
                 >
                     Log in
                 </button>
@@ -72,7 +79,7 @@ function LoginPageCarousell({slides,slide,setSlide,timer,setTimer}) {
             return;
         }
         setSlide((slidesSize +slide + (left ? -1 : 1))%slidesSize);
-        setTimer(4000);
+        setTimer(10000);
     }
     const imageRef = useRef(null);
     useEffect(() => {
@@ -111,7 +118,7 @@ function BottomDotList({slide,timer,setSlide,setTimer}){
     const slidesSize = slides.length;
     const handleDotClick = (index) => {
         setSlide(index);
-        setTimer(timer);
+        setTimer(10000);
     };
     return (
         <div className="dotsContainer">

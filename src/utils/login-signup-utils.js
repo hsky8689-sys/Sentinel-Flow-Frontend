@@ -14,15 +14,11 @@ export async function tryLogin(username, password){
                                              },
                                              withCredentials:true
                                          });
-        const response = request.data;
-        alert(JSON.stringify(response));
+        return request.data;
     }catch (error){
         alert(`Eroarea pulii ${error}`)
         return {response:'Could not receive back answer'};
     }
-}
-export async function accesProfilePage(userId){
-
 }
 export async function signUp(username,email,password,birthday,){
     try{
@@ -40,9 +36,7 @@ export async function signUp(username,email,password,birthday,){
                 withCredentials:true
             });
         const response = request.data;
-        if(response.status === 201) {
-            const userId = response.user.id;
-            await accesProfilePage(userId);
+        if(response.status === 201) {S
             return;
         }
         if(response.status === 400) {
