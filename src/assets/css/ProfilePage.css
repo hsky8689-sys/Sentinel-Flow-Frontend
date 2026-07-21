@@ -119,6 +119,8 @@
     padding: 20px;
     box-sizing: border-box;
     gap:10px;
+    overflow-y: auto; 
+    overflow-x: hidden;
 }
 .addSectionInput{
     background-color: #1a1a1a;
@@ -156,7 +158,6 @@
 .projectSection{
     width: 100%;
     gap:2vh;
-    border:2px green solid;
     border-radius: 5px;
     color: greenyellow;
 }
@@ -305,4 +306,44 @@ textarea::placeholder{
     text-align: center;
     width: 50%;
     justify-content: center;
+}
+#mainPfpContainer, 
+#mainPfpContainer input, 
+#mainPfpContainer textarea, 
+#mainPfpContainer button,
+#mainPfpContainer select {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+.sectionTitle h2, .projectSection h2, .techSectionBox h3 {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+.sectionContent {
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+}
+input::placeholder,
+textarea::placeholder {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    opacity: 0.6;
+}
+.sectionContentInput,
+.projectDescription{
+    font-size: small;
+    text-align: justify;
+    hyphens: auto;
+    line-height: 1.6;
+    white-space: pre-warp;
+    word-break: break-word;
+    text-size-adjust: inherit;
+    word-spacing: 1px;
+}
+.projectPageLink,
+.projectPageLinkContainer{
+    text-decoration:none;
+    color:green;
+    font-size:medium;
+    align-items:center;
 }

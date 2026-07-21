@@ -6,7 +6,6 @@ export async function tryLogin(username, password){
     try{
         const csrfToken = await getCookie();
         const body = {'username':username,'password':password};
-        alert(`${BASE_URL}/login/`);
         const request = await axios.post(`${BASE_URL}/login/`,
                                          body,
                                          {headers:{
