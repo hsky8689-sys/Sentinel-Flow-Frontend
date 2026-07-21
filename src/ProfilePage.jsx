@@ -11,7 +11,14 @@ import { accesProfilePage,
          deleteProfileSection } from './utils/api-utlis';
 import { useRef } from 'react';
 const BASE_URL = import.meta.env.VITE_API_URL;
-function TechnicalSkillInput({isOwner,modifyChanges,title,modifyTitle,addNew,setAddNew}){
+function TechnicalSkillInput({isOwner,
+                              modifyChanges,
+                              title,
+                              modifyTitle,
+                              addNew,
+                              setAddNew,
+                              selectedId,
+                              setSelectedId}){
   if (isOwner === false)return null;
   const [buttonAction, setButtonAction] = useState('add');
   const bottomRef = useRef(null);
@@ -28,32 +35,18 @@ function TechnicalSkillInput({isOwner,modifyChanges,title,modifyTitle,addNew,set
       });
   };
   const handleConfirm = () => {
+    const len = skills.length;
+    let added = 0;
     const filledSkills = skills.filter(skill=>skill.trim()!=='');
-    if(addNew){
-      const newAdded = (async () => {
-        const response =  await addTechStackSection(title,skills);
-        return response;
-      })();
-      console.log(newAdded);
-      if(newAdded){
-        setSkills([""]);
-        
-      }
-    }
-    else{
-      const len = skills.length;
-      let added = 0;
-      filledSkills.forEach((skill)=>{
+    filledSkills.forEach((skill)=>{
         const newAdded = (async () => {
-        const response =  await addSkillToSection(title,skill);
-        added += newAdded ? 1 : 0;
-        return response;
+        const response =  addNew ? await addTechStackSection(selectedId,skill)
+                                 : await addSkillToSection(selectedId,skill);
+        if(addNew && typeof response === 'number')added++;
+        if(!addNew && response)added++;
       })();
-      })
-      if(added === len){
-        setSkills([""]);
-      }
-    }
+    });
+    if(added === len)setSkills([""]);
   };
   useEffect(() => {
     if(hasPageBeenRendered.current){
@@ -95,13 +88,14 @@ function FriendshipStatusButton({userData}){
            => the Accept/Deny request if an user enters the page of sb who sent him a request
            => the Cancel request if an user enters the page of sb with a pending request
            => nothing if he enters his own page
+           sentToHim: profileData.sent_to_him,
   */
   if(userData === null){
     return;
   }
-  const sentToHim = userData.sent_to_him;
-  const isPageOwner = userData.is_owner;
-  const receivedFromHim = userData.recieved_from_him;
+  const sentToHim = userData.sentToHim;
+  const isPageOwner = userData.isOwner;
+  const receivedFromHim = userData.receivedFromHim;
   if(isPageOwner){
     return;
   }
@@ -128,32 +122,32 @@ function FriendshipStatusButton({userData}){
   return;
 }
 function makeBgStyle({backgroundImageUrl}){
-  return {
-          backgroundImage: `url(${backgroundImageUrl})`,
+  return {backgroundImage: `url(${backgroundImageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'};
 }
-function UpperContainer({data}){
-  const bgUrl = data.background_picture;
-  const url = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop';
+function UpperContainer({userData}){
+  const bgUrl = userData.backgroundPicture;
+  const pfpUrl = userData.profilePicture;
   const {username} = useParams();
   return (
-        <div id={"backgroundPicture"} style={makeBgStyle({backgroundImageUrl:url})}>
+        <div id={"backgroundPicture"} style={makeBgStyle({backgroundImageUrl:bgUrl})}>
                 <div id={"pfp"}>
-                    <img src={bgUrl} 
+                    <img src={pfpUrl} 
                         alt={"poza profil"}>
                     </img>
                 </div>
                 <h1 id='usernameHeader'>{username}</h1>
-                <FriendshipStatusButton userData={data}/>
+                <FriendshipStatusButton userData={userData}/>
                 <button id='chatBtn'>Message user</button>
         </div>
   );
 }
-function UserTechStack({ data, isOwner }) {
+export function UserTechStack({ data, isOwner }) {
   const [selectedSection, setSelectedSection] = useState('');
   const [sectionTitle, setSectionTitle] = useState('');
   const [addNew,setAddNew] = useState(false);
+  const [selectedId,setSelectedId] = useState(-1);
   const handleSkillDeletion = async (skillId) => {
     const response = await deleteSkill(skillId);
     if(response){
@@ -168,8 +162,10 @@ function UserTechStack({ data, isOwner }) {
   };
   const [techSections,setTechSections] = useState(data || []);
   useEffect(() => {
-    if (techSections.length > 0) {
-      setSelectedSection(techSections[0].name);
+    const newSections = data || [];
+    setTechSections(newSections);
+    if (newSections.length > 0) {
+      setSelectedSection(newSections[0].name);
     }
   }, [data]);
   if (!data) return null;
@@ -207,14 +203,19 @@ function UserTechStack({ data, isOwner }) {
             value={selectedSection}
             onChange={(e) => {
               setAddNew(false);
-              setSelectedSection(e.target.value)
+              setSelectedSection(e.target.value);
+              setSelectedId(techSections
+                             .filter((section)=>section.name === e.target.value)
+                             [0]
+                             .id);
               setSectionTitle(e.target.value);
             }}
           >
             {techSections.map((sectionData) => {
               const { id, name } = sectionData;
               return (
-                <option key={id} value={name}>
+                <option key={id} 
+                        value={name}>
                   {name}
                 </option>
               );
@@ -226,20 +227,25 @@ function UserTechStack({ data, isOwner }) {
                                modifyTitle={setSectionTitle}
                                addNew={addNew}
                                setAddNew={setAddNew}
+                               selectedId={selectedId}
+                               setSelectedId={setSelectedId}
           />
         </div>
       )}
     </div>
   );
 }
-function UserProfileSections({owner,sections}){
-  if(!sections)return null;
-  const initialSections = Array.isArray(sections) ? sections : Object.values(sections);
+export function UserProfileSections({owner,sections}){
+  const initialSections = Array.isArray(sections) ? sections : Object.values(sections || {});
   const [profileSections, setProfileSections] = useState(initialSections);
   const [titleValue,setTitleValue] = useState('');
   const [contentValue,setContentValue] = useState('');
   const [selectedId,setSelectedId] = useState(-1);
   const [addNew,setAddNew] = useState(true);
+  useEffect(() => {
+    setProfileSections(Array.isArray(sections) ? sections : Object.values(sections || {}));
+  }, [sections]);
+  if(!sections)return null;
   const renderEditData = (id,name,description) => {
     setAddNew(false);
     setSelectedId(id);
@@ -305,51 +311,63 @@ function UserProfileSections({owner,sections}){
       //handle bad scenario
     }
   };
-  return( 
-        <div id="sections">
-          {profileSections.map(([key,sectionData])=>{
-            const {id,name,content,hidden} = sectionData;
-            return (
-                <div key={id} className='sectionTitle'>
-                  <h2>{name}</h2>
-                  <span className='sectionContent'>{content}</span>
-                  {owner && (
-                    <div>
-                      <button className='deleteBtn'
-                              onClick={()=>handleSectionDelete(id)}
-                      >X</button>
-                      <button className='editBtn'
-                              onClick={()=>renderEditData(id,name,content)}
-                      >Edit</button></div>
-                    )}
-                </div>
-            );
-          })
-          }
-          {owner && <div className="addNewSection">
-            <input className='sectionTitleInput'
-                   type='text'
-                   value={titleValue}
-                   onChange={(e)=>{
-                    setTitleValue(e.target.value);
-                   }}
-                   placeholder='Add a title for the new section...'/>
-            <textarea className='sectionContentInput'
-                      value={contentValue}
-                      onChange={(e)=>setContentValue(e.target.value)}
-                      placeholder='Add content for the new section...'/>
-            <button className='addBtn'
-                    onClick={()=>{
-                      if(addNew)handleSectionAdd(titleValue,contentValue);
-                      else handleSectionModify(selectedId,titleValue,contentValue);
-                    }}
-            >
-              {addNew?'Add new section':'Edit section'}
-            </button>
-          </div>
-          }
+  return (
+  <div id="sections">
+    {(Array.isArray(profileSections) ? profileSections : Object.values(profileSections || {}))
+    .map((sectionData) => {
+      if (!sectionData || typeof sectionData !== 'object') return null;
+      const { id, name, content } = sectionData;
+      return (
+        <div key={id || name} className='sectionTitle'>
+          <h2>{name}</h2>
+          <span className='sectionContent'>{content}</span>
+          {owner && (
+            <div>
+              <button 
+                className='deleteBtn'
+                onClick={() => handleSectionDelete(id)}
+              >
+                X
+              </button>
+              <button 
+                className='editBtn'
+                onClick={() => renderEditData(id, name, content)}
+              >
+                Edit
+              </button>
+            </div>
+          )}
         </div>
-  );
+      );
+    })}
+    {owner && (
+      <div className="addNewSection">
+        <input 
+          className='sectionTitleInput'
+          type='text'
+          value={titleValue}
+          onChange={(e) => setTitleValue(e.target.value)}
+          placeholder='Add a title for the new section...'
+        />
+        <textarea 
+          className='sectionContentInput'
+          value={contentValue}
+          onChange={(e) => setContentValue(e.target.value)}
+          placeholder='Add content for the new section...'
+        />
+        <button 
+          className='addBtn'
+          onClick={() => {
+            if (addNew) handleSectionAdd(titleValue, contentValue);
+            else handleSectionModify(selectedId, titleValue, contentValue);
+          }}
+        >
+          {addNew ? 'Add new section' : 'Edit section'}
+        </button>
+      </div>
+    )}
+  </div>
+);
 }
 function UserProjects({projects}){
   const navigate = useNavigate();
@@ -389,8 +407,8 @@ function ProfilePage() {
         receivedFromHim: profileData.recieved_from_him,
         friends: profileData.friends,
         friendshipRequestId: profileData.friendship_request_id,
-        profile_picture: `${BASE_URL}${profileData.user_avatar}`,
-        background_picture: `${BASE_URL}${profileData.background_picture}`,
+        profilePicture: `${BASE_URL}${profileData.user_avatar}`,
+        backgroundPicture: `${BASE_URL}${profileData.background_picture}`,
         isOwner:profileData.is_owner
     };
     const techStack = profileData.techstack_category;
@@ -399,7 +417,7 @@ function ProfilePage() {
     const projects = profileData.user_projects;
     return (
         <div id="mainPfpContainer">
-            <UpperContainer data={upperContainerData} />
+            <UpperContainer userData={upperContainerData} />
             <div id="mainUserDataContent">
                 <UserTechStack isOwner={isOwner} data={techStack}/>
                 <UserProfileSections owner={isOwner} sections={profileSections}/>

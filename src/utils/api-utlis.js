@@ -48,10 +48,10 @@ export async function accesProfilePage(username){
     }
     return;
 }
-export async function addSkillToSection(skillName,sectionId){
+export async function addSkillToSection(sectionId,skillName){
     try{
         let cookie = searchCookie('csrftoken');
-        const body = {'section_id':skillId,'name':skillName};
+        const body = {'section_id':sectionId,'name':skillName};
         const response = await axios.post(`${BASE_URL}/users/skills`,
         body,{
             headers: {
@@ -62,14 +62,14 @@ export async function addSkillToSection(skillName,sectionId){
         const status = response.data.status;
         return status === 200;
     }catch(error){
-        console.log(`Could not add skill with name ${skillName} to section with name ${skillName}`);
+        console.log(`Could not add skill with name ${skillName} to section with id ${sectionId}`);
     }
     return false;
 }
 export async function deleteSkill(skillId){
     try{
         let cookie = searchCookie('csrftoken');
-        const response = await axios.delete(`${BASE_URL}/skills/${skillId}`,{
+        const response = await axios.delete(`${BASE_URL}/users/skills/${skillId}`,{
             headers: {
                 'X-CSRFToken': cookie
             },
@@ -103,7 +103,7 @@ export async function addTechStackSection(sectionName,skills){
 export async function deleteTechStackSection(sectionId){
     try{
         let cookie = searchCookie('csrftoken');
-        const response = await axios.post(`${BASE_URL}/users/techstacks/${sectionId}`
+        const response = await axios.delete(`${BASE_URL}/users/techstacks/${sectionId}`
             ,{
             headers: {
                 'X-CSRFToken': cookie
@@ -121,7 +121,7 @@ export async function addProfileSection(name,content){
     try{
         let cookie = searchCookie('csrftoken');
         const body = {'name':name,'content':content,'hidden':false}
-        const response = await axios.post(`${BASE_URL}/users/profile-sections`,
+        const response = await axios.post(`${BASE_URL}/users/profile-sections/`,
             body,{
             headers: {
                 'X-CSRFToken': cookie
@@ -157,7 +157,7 @@ export async function modifyProfileSection(id,name,content){
 export async function deleteProfileSection(id){
     try{
         let cookie = searchCookie('csrftoken');
-        const response = await axios.put(`${BASE_URL}/users/profile-sections/${id}`,
+        const response = await axios.delete(`${BASE_URL}/users/profile-sections/${id}`,
             {
             headers: {
                 'X-CSRFToken': cookie
