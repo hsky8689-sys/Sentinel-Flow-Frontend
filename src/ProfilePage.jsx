@@ -8,11 +8,13 @@ import { accesProfilePage,
          deleteTechStackSection,
          addProfileSection,
          modifyProfileSection,
-         deleteProfileSection } from './utils/api-utlis';
+         deleteProfileSection,
+         addProfilePicture,
+         addBackgroundPicture } from './utils/api-utlis';
 import { useRef } from 'react';
 const BASE_URL = import.meta.env.VITE_API_URL;
 function TechnicalSkillInput({isOwner,
-                              modifyChanges,
+                              onTechStackChanged,
                               title,
                               modifyTitle,
                               addNew,
@@ -20,10 +22,9 @@ function TechnicalSkillInput({isOwner,
                               selectedId,
                               setSelectedId}){
   if (isOwner === false)return null;
-  const [buttonAction, setButtonAction] = useState('add');
   const bottomRef = useRef(null);
   const [skills,setSkills] = useState([""]);
-  const hasPageBeenRendered = useState(false);
+  const hasPageBeenRendered = useRef(false);
   const handleAddInput = () => {
     if(skills.length < 5)setSkills(prevSkills => [...prevSkills,""]);
   };
@@ -34,19 +35,23 @@ function TechnicalSkillInput({isOwner,
         return updated;
       });
   };
-  const handleConfirm = () => {
-    const len = skills.length;
-    let added = 0;
+  const handleConfirm = async () => {
     const filledSkills = skills.filter(skill=>skill.trim()!=='');
-    filledSkills.forEach((skill)=>{
-        const newAdded = (async () => {
-        const response =  addNew ? await addTechStackSection(selectedId,skill)
-                                 : await addSkillToSection(selectedId,skill);
-        if(addNew && typeof response === 'number')added++;
-        if(!addNew && response)added++;
-      })();
-    });
-    if(added === len)setSkills([""]);
+    if(filledSkills.length === 0) return;
+    let success;
+    if(addNew){
+      success = await addTechStackSection(title, filledSkills);
+    }else{
+      const results = await Promise.all(
+        filledSkills.map(skill => addSkillToSection(selectedId, skill))
+      );
+      success = results.every(Boolean);
+    }
+    if(success){
+      setSkills([""]);
+      if(addNew)setAddNew(false);
+      onTechStackChanged?.();
+    }
   };
   useEffect(() => {
     if(hasPageBeenRendered.current){
@@ -71,7 +76,7 @@ function TechnicalSkillInput({isOwner,
               />
           ))
           }
-          <span ref={bottomRef}>
+          <span ref={bottomRef} className='techActionButtons'>
             {skills.length < 5 && (
                 <button className='addBtn' onClick={handleAddInput}>+</button>
             )}
@@ -127,23 +132,78 @@ function makeBgStyle({backgroundImageUrl}){
           backgroundPosition: 'center'};
 }
 function UpperContainer({userData}){
-  const bgUrl = userData.backgroundPicture;
-  const pfpUrl = userData.profilePicture;
+  const [profilePictureUrl,setProfilePictureUrl] = useState(userData.profilePicture);
+  const fallbackBackground = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1920&auto=format&fit=crop';
+  const initialBackgroundPic = userData.backgroundPicture || fallbackBackground;
+  const [backgroundPictureUrl,setBackgroundPictureUrl] = useState(initialBackgroundPic);
   const {username} = useParams();
+  const profilePicInputRef = useRef(null);
+  const backgroundPicInputRef = useRef(null);
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const response = await addProfilePicture(file);
+    if(response !== ''){
+      setProfilePictureUrl(response);
+    }
+  };
+  const handleBackgroundPictureChange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const response = await addBackgroundPicture(file);
+    if(response !== ''){
+      setBackgroundPictureUrl(response);
+    }
+  };
   return (
-        <div id={"backgroundPicture"} style={makeBgStyle({backgroundImageUrl:bgUrl})}>
-                <div id={"pfp"}>
-                    <img src={pfpUrl} 
-                        alt={"poza profil"}>
-                    </img>
+        <div id={"backgroundPicture"} 
+             style={makeBgStyle({backgroundImageUrl:backgroundPictureUrl})}>
+                <div id="pfpWrapper">
+                    <div id={"pfp"}>
+                        <img src={profilePictureUrl}
+                            alt={"poza profil"}>
+                        </img>
+                    </div>
+                    {userData.isOwner && (
+                      <>
+                        <input type="file"
+                               accept="image/*"
+                               ref={profilePicInputRef}
+                               onChange={handleProfilePictureChange}
+                               className="hiddenFileInput"
+                        />
+                        <button type="button"
+                                className="editPictureBtn editProfilePictureBtn"
+                                onClick={() => profilePicInputRef.current.click()}
+                        >
+                          ✏️
+                        </button>
+                      </>
+                    )}
                 </div>
                 <h1 id='usernameHeader'>{username}</h1>
                 <FriendshipStatusButton userData={userData}/>
-                <button id='chatBtn'>Message user</button>
+                {!userData.isOwner && <button id='chatBtn'>Message user</button>}
+                {userData.isOwner && (
+                  <>
+                    <input type="file"
+                           accept="image/*"
+                           ref={backgroundPicInputRef}
+                           onChange={handleBackgroundPictureChange}
+                           className="hiddenFileInput"
+                    />
+                    <button type="button"
+                            className="editPictureBtn editBackgroundPictureBtn"
+                            onClick={() => backgroundPicInputRef.current.click()}
+                    >
+                      ✏️
+                    </button>
+                  </>
+                )}
         </div>
   );
 }
-export function UserTechStack({ data, isOwner }) {
+export function UserTechStack({ data, isOwner, onTechStackChanged }) {
   const [selectedSection, setSelectedSection] = useState('');
   const [sectionTitle, setSectionTitle] = useState('');
   const [addNew,setAddNew] = useState(false);
@@ -151,13 +211,13 @@ export function UserTechStack({ data, isOwner }) {
   const handleSkillDeletion = async (skillId) => {
     const response = await deleteSkill(skillId);
     if(response){
-
+      onTechStackChanged?.();
     }
   };
-  const handleSkillCreation = async (skillName,sectionId) => {
-    const response = await addSkillToSection(skillName,sectionId);
+  const handleSectionDeletion = async (sectionId) => {
+    const response = await deleteTechStackSection(sectionId);
     if(response){
-      
+      onTechStackChanged?.();
     }
   };
   const [techSections,setTechSections] = useState(data || []);
@@ -179,7 +239,7 @@ export function UserTechStack({ data, isOwner }) {
             <span className="sectionTitleRow">
               <h3 className="sectionTitle">{name}</h3>
               {isOwner && (<button className='deleteBtn'
-                                   onClick={()=>deleteTechStackSection(id)}
+                                   onClick={()=>handleSectionDeletion(id)}
                             >X</button>)}
             </span>
             <div className="skillsGrid">
@@ -222,7 +282,7 @@ export function UserTechStack({ data, isOwner }) {
             })}
           </select>
           <TechnicalSkillInput isOwner={isOwner}
-                               modifyChanges={setTechSections}
+                               onTechStackChanged={onTechStackChanged}
                                title={sectionTitle}
                                modifyTitle={setSectionTitle}
                                addNew={addNew}
@@ -242,9 +302,6 @@ export function UserProfileSections({owner,sections}){
   const [contentValue,setContentValue] = useState('');
   const [selectedId,setSelectedId] = useState(-1);
   const [addNew,setAddNew] = useState(true);
-  useEffect(() => {
-    setProfileSections(Array.isArray(sections) ? sections : Object.values(sections || {}));
-  }, [sections]);
   if(!sections)return null;
   const renderEditData = (id,name,description) => {
     setAddNew(false);
@@ -285,7 +342,7 @@ export function UserProfileSections({owner,sections}){
         {
           id:response,
           name:name,
-          description:description,
+          content:description,
           hidden:false
         }
       ];
@@ -297,9 +354,6 @@ export function UserProfileSections({owner,sections}){
     }
   };
   const handleSectionDelete = async (id) => {
-    if(typeof id !== 'number'){
-      return;
-    }
     const response = await deleteProfileSection(id);
     if(response){
       const remainingSections = profileSections.filter(section=>section.id!==id);
@@ -318,7 +372,7 @@ export function UserProfileSections({owner,sections}){
       if (!sectionData || typeof sectionData !== 'object') return null;
       const { id, name, content } = sectionData;
       return (
-        <div key={id || name} className='sectionTitle'>
+        <div key={id || name} className='profileSectionBox'>
           <h2>{name}</h2>
           <span className='sectionContent'>{content}</span>
           {owner && (
@@ -390,11 +444,11 @@ function UserProjects({projects}){
 function ProfilePage() {
     const { username } = useParams(); 
     const [profileData, setProfileData] = useState(null);
+    const fetchData = async () => {
+        const data = await accesProfilePage(username);
+        setProfileData(data);
+    };
     useEffect(() => {
-        const fetchData = async () => {
-            const data = await accesProfilePage(username);
-            setProfileData(data);
-        };
         if (username) {
             fetchData();
         }
@@ -419,7 +473,7 @@ function ProfilePage() {
         <div id="mainPfpContainer">
             <UpperContainer userData={upperContainerData} />
             <div id="mainUserDataContent">
-                <UserTechStack isOwner={isOwner} data={techStack}/>
+                <UserTechStack isOwner={isOwner} data={techStack} onTechStackChanged={fetchData}/>
                 <UserProfileSections owner={isOwner} sections={profileSections}/>
                 <UserProjects projects={projects}/>
             </div>

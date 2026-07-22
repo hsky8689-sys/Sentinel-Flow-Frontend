@@ -60,7 +60,7 @@ export async function addSkillToSection(sectionId,skillName){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch(error){
         console.log(`Could not add skill with name ${skillName} to section with id ${sectionId}`);
     }
@@ -76,7 +76,7 @@ export async function deleteSkill(skillId){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch (error) {
         console.log(`Could not delete skill with id ${skillId}`);
     }
@@ -94,7 +94,7 @@ export async function addTechStackSection(sectionName,skills){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch (error) {
         console.log(`Could not add techstack section`);
     }
@@ -111,7 +111,7 @@ export async function deleteTechStackSection(sectionId){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch (error) {
         console.log(`Could not delete techstack section due to error ${error}`);
     }
@@ -148,7 +148,7 @@ export async function modifyProfileSection(id,name,content){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch (error) {
         console.log(`Could not modify profile section due to error ${error}`);
     }
@@ -165,9 +165,51 @@ export async function deleteProfileSection(id){
             withCredentials: true
         });
         const status = response.data.status;
-        return status === 200;
+        return status === 'success';
     }catch (error) {
         console.log(`Could not delete section due to error ${error}`);
     }
     return false;
+}
+export async function addProfilePicture(file){
+    try{
+        let cookie = searchCookie('csrftoken');
+        const formData = new FormData();
+        formData.append('picture', file);
+        const response = await axios.post(`${BASE_URL}/users/profile-pictures/`,
+            formData,
+            {headers: {
+                'X-CSRFToken': cookie,
+            },
+            withCredentials: true
+        });
+        const status = response.data.status;
+        if(status === 'success'){
+            return `${BASE_URL}${response.data.photo_url}`;
+        }
+    }catch (error) {
+        console.log(`Could not add profile picture due to error: ${error}`);
+    }
+    return '';
+}
+export async function addBackgroundPicture(file){
+    try{
+        let cookie = searchCookie('csrftoken');
+        const formData = new FormData();
+        formData.append('picture', file);
+        const response = await axios.post(`${BASE_URL}/users/background-pictures/`,
+            formData,
+            {headers: {
+                'X-CSRFToken': cookie,
+            },
+            withCredentials: true
+        });
+        const status = response.data.status;
+        if(status === 'success'){
+            return `${BASE_URL}${response.data.photo_url}`;
+        }
+    }catch (error) {
+        console.log(`Could not add background picture due to error ${error}`);
+    }
+    return '';
 }
