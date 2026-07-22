@@ -213,3 +213,68 @@ export async function addBackgroundPicture(file){
     }
     return '';
 }
+export async function sendFriendRequest(receiverId){
+    try{
+        let cookie = searchCookie('csrftoken');
+        const body = {'receiver_id':receiverId}
+        const response = await axios.post(`${BASE_URL}/users/friend-requests`,
+                                    body,{
+                                        headers: {
+                                            'X-CSRFToken': cookie,
+                                        },
+                                        withCredentials:true
+                                    });
+        return response.data.status === 'success' ? response.data.request_id : -1;
+    }catch(error){
+        console.log(`Could not send friend request because of error ${error}`);
+    }
+    return -1;
+}
+export async function acceptFriendRequest(requestId){
+    const cookie = searchCookie('csrftoken');
+    const url = `${BASE_URL}/users/friend-requests/${requestId}`;
+    const body = {'status':'pending'};
+    try{
+        const response = await axios.patch(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not send accept request because of error ${error}`);
+    }
+    return false;
+}
+export async function deleteFriendRequest(requestId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/users/friend-requests/${requestId}`;
+        const response = await axios.delete(url,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+                }
+        );
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not delete friend request because of error ${error}`);
+    }
+    return false;
+}
+export async function removeFriend(userId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/users/${userId}/friendship`;
+        const response = await axios.delete(url,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+                }
+        );
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not remove friend because of error ${error}`);
+    }
+    return false;
+}

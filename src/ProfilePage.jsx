@@ -10,7 +10,11 @@ import { accesProfilePage,
          modifyProfileSection,
          deleteProfileSection,
          addProfilePicture,
-         addBackgroundPicture } from './utils/api-utlis';
+         addBackgroundPicture,
+         sendFriendRequest,
+         deleteFriendRequest,
+         acceptFriendRequest,
+         removeFriend } from './utils/api-utlis';
 import { useRef } from 'react';
 const BASE_URL = import.meta.env.VITE_API_URL;
 function TechnicalSkillInput({isOwner,
@@ -93,38 +97,82 @@ function FriendshipStatusButton({userData}){
            => the Accept/Deny request if an user enters the page of sb who sent him a request
            => the Cancel request if an user enters the page of sb with a pending request
            => nothing if he enters his own page
-           sentToHim: profileData.sent_to_him,
   */
   if(userData === null){
     return;
   }
-  const sentToHim = userData.sentToHim;
+  const [sentToHim,setSentToHim] = useState(userData.sentToHim);
   const isPageOwner = userData.isOwner;
-  const receivedFromHim = userData.receivedFromHim;
-  if(isPageOwner){
-    return;
+  const [receivedFromHim,setReceivedFromHim] = useState(userData.receivedFromHim);
+  const userId = userData.id;
+  const [requestId,setRequestId] = useState(userData.requestId);
+  const [areFriends,setAreFriends] = useState(userData.friends);
+  console.log(`Sent to him: ${sentToHim}`);
+  console.log(`Received from him: ${receivedFromHim}`);
+  console.log(`Are friends: ${areFriends}`);
+  console.log(`Pending request id : ${requestId} or -1 if none`);
+   const handleRequestSend = async (userId) => {
+    const response = await sendFriendRequest(userId);
+    if(typeof response === 'number'){
+      setRequestId(response);
+      setAreFriends(false);
+      setSentToHim(true);
+      setReceivedFromHim(false);
+    }
+  };
+  const handleRequestCancel = async (requestId) => {
+    const response = await deleteFriendRequest(requestId);
+    if(response){
+       setReceivedFromHim(false);
+       setSentToHim(false);
+       setAreFriends(false);
+    }
+  };
+  const handleFriendshipRemoval = async (userId) => {
+    const response = await removeFriend(userId);
+    if(response){
+      setAreFriends(false);
+      setReceivedFromHim(false);
+      setSentToHim(false);
+    }
+  };
+  const handleRequestAccept = async (requestId) => {
+    const response = await acceptFriendRequest(requestId);
+    if(response){
+      setSentToHim(false);
+      setReceivedFromHim(false);
+      setAreFriends(true);
+    }
   }
-  else if(sentToHim){
-    return (<button onClick={null}>Cancel request</button>);
+  const handleRequestDelete = async (requestId) => {
+    const response = await deleteFriendRequest(requestId);
+    if(response){
+      setSentToHim(false);
+      setReceivedFromHim(false);
+      setAreFriends(false);
+      setRequestId(-1);
+    }
   }
-  else if(receivedFromHim){
-    return (<div className='acceptOrDenyRequest'>
-              <button id='acceptBtn' onClick={null}>
+  return (
+    <>
+      {isPageOwner && null}
+      {(sentToHim && requestId !== -1) && <button className='denyBtn' onClick={()=>handleRequestDelete(requestId)}>Cancel request</button>}
+      {receivedFromHim && <div className='acceptOrDenyRequest'>
+              <button id='acceptBtn' onClick={()=>handleRequestAccept(requestId)}>
                 Accept
               </button>
-              <button type={"button"}
-                   onClick={null}
+              <button className='denyBtn'
+                   onClick={()=>handleRequestDelete(requestId)}
               >
                 Deny
               </button>
-            </div>);
-  }
-  else{
-    return (<div>
-                <button id='sendBtn'>Send friend request</button>
-            </div>);
-  }
-  return;
+            </div>}
+      {(!receivedFromHim && !sentToHim && !isPageOwner && !areFriends) && 
+      <button id='sendBtn' onClick={()=>handleRequestSend(userId)}>Send request</button>
+      }
+      {areFriends && <button className='denyBtn' onClick={()=>handleFriendshipRemoval(userId)}>Remove friend</button>}
+    </>
+  );
 }
 function makeBgStyle({backgroundImageUrl}){
   return {backgroundImage: `url(${backgroundImageUrl})`,
@@ -458,12 +506,14 @@ function ProfilePage() {
     }
     const upperContainerData = {
         sentToHim: profileData.sent_to_him,
-        receivedFromHim: profileData.recieved_from_him,
+        receivedFromHim: profileData.received_from_him,
         friends: profileData.friends,
         friendshipRequestId: profileData.friendship_request_id,
         profilePicture: `${BASE_URL}${profileData.user_avatar}`,
         backgroundPicture: `${BASE_URL}${profileData.background_picture}`,
-        isOwner:profileData.is_owner
+        isOwner:profileData.is_owner,
+        id:profileData.id,
+        requestId:profileData.pending_request_id
     };
     const techStack = profileData.techstack_category;
     const isOwner = profileData.is_owner;
