@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react'
 import './assets/css/ProfilePage.css'
 import { useParams,useNavigate,Link } from 'react-router-dom';
 import { accesProfilePage,
+         logout,
          deleteSkill,
          addTechStackSection,
          addSkillToSection,
@@ -107,10 +108,6 @@ function FriendshipStatusButton({userData}){
   const userId = userData.id;
   const [requestId,setRequestId] = useState(userData.requestId);
   const [areFriends,setAreFriends] = useState(userData.friends);
-  console.log(`Sent to him: ${sentToHim}`);
-  console.log(`Received from him: ${receivedFromHim}`);
-  console.log(`Are friends: ${areFriends}`);
-  console.log(`Pending request id : ${requestId} or -1 if none`);
    const handleRequestSend = async (userId) => {
     const response = await sendFriendRequest(userId);
     if(typeof response === 'number'){
@@ -480,7 +477,7 @@ function UserProjects({projects}){
                 return (
                   <div key={`project-${name}`} className='projectSection'>
                     <h2 className='projectPageLinkContainer'>
-                      <Link to={`/projects/${name}`} className='projectPageLink'>{name}</Link>
+                      <Link to={`/project-page/${name}`} className='projectPageLink'>{name}</Link>
                     </h2>
                     <div className='projectDescription'>{description}</div>
                   </div>
@@ -488,6 +485,53 @@ function UserProjects({projects}){
             })
             }
         </div>;
+}
+export function NavigationBar(){
+  const nav = useNavigate();
+  const goToLoginPage = () => {nav('/');};
+  const goToSearchPage = () => {nav('/search-page');};
+  const goToProjectCreationPage = () => {nav('/project-creation-page');};
+  const goToChatPage = () => {nav('/chat-conversations');};
+  const goToInbox = () => {nav('/inbox')};
+  const handleLogout = async () => {
+      const response = await logout();
+      if(response){
+        goToLoginPage();
+      }
+  } 
+  return (
+    <nav id='navbar'>
+      <button className='navbarBtn'
+              onClick={goToLoginPage}
+      >
+        Log in
+      </button>
+      <button className='navbarBtn'
+              onClick={goToSearchPage}
+      >
+        Search
+      </button>
+      <button className='navbarBtn'
+              onClick={goToProjectCreationPage}
+      >
+        Create Project
+      </button>
+      <button className='navbarBtn'
+              onClick={goToChatPage}
+      >
+        Chat
+      </button>
+      <button className='navbarBtn'
+              onClick={goToInbox}
+      >
+        Inbox
+      </button>
+      <button className='navbarBtn' 
+              onClick={handleLogout}
+      >Logout
+      </button>
+    </nav>
+  )
 }
 function ProfilePage() {
     const { username } = useParams(); 
@@ -521,6 +565,7 @@ function ProfilePage() {
     const projects = profileData.user_projects;
     return (
         <div id="mainPfpContainer">
+            <NavigationBar/>
             <UpperContainer userData={upperContainerData} />
             <div id="mainUserDataContent">
                 <UserTechStack isOwner={isOwner} data={techStack} onTechStackChanged={fetchData}/>

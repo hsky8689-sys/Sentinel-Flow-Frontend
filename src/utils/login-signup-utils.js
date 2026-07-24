@@ -42,6 +42,6 @@ export async function signUp(username,email,password,birthday,){
             window.location=CLIENT_URL+"/login"
         }
     }catch (error){
-        alert(`Error ${error}`);
+        console.log(`Error ${error}`);
     }
 }

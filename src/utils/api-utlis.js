@@ -31,6 +31,21 @@ export async function getCookie() {
     }
     return cookie;
 }
+export async function logout(){
+    try{
+        const csrfToken = await getCookie();
+        const response = await axios.post(`${BASE_URL}/users/logout`,{
+            headers:{
+                'X-CSRFToken':csrfToken
+            },
+            withCredentials:true
+        });
+        return response.status === 200;
+    }catch(error){
+        console.log(`Could not log out because of error ${error}`)
+    }
+    return false;
+}
 export async function accesProfilePage(username){
     try{
         let cookie = searchCookie('csrftoken');
@@ -277,4 +292,42 @@ export async function removeFriend(userId){
         console.log(`Could not remove friend because of error ${error}`);
     }
     return false;
+}
+export async function searchQuery(query){
+    try{
+      if(query === '')return{};
+      const cookie = searchCookie('csrftoken');
+      const url = `${BASE_URL}/users/search/api`;
+      const body = {'query':query};
+      const response = await axios.post(url,body,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+      return response.data.results;
+    }catch(error){
+        console.log(`Could not search because of error ${error}`);
+        return {};
+    }
+}
+export async function createProject(name,description,neededSkills,githubRepos){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/users/project-creation`;
+        const body = {
+            'name':name,
+            'description':description,
+            'needed skills':neededSkills,
+            'github_repos':githubRepos
+        }
+        const response = await axios.post(url,body,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.project.name;
+    }catch(error){
+        console.log(`Could not create project due to error ${error}`)
+    }
+    return '';
 }
