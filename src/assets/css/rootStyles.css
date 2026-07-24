@@ -48,3 +48,29 @@ body {
         --login-max-width: calc(var(--screen-w) / 5);
     }
 }
+body, input, textarea, button, select {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+input::placeholder,
+textarea::placeholder {
+    color: greenyellow;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    opacity: 0.6;
+}
+*::-webkit-scrollbar {
+    width: 15px;
+    height: 20px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+    background-color: #555555;
+    border-radius: 20px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background-color: #888888;
+}

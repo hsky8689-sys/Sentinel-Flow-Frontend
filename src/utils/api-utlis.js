@@ -34,7 +34,8 @@ export async function getCookie() {
 export async function logout(){
     try{
         const csrfToken = await getCookie();
-        const response = await axios.post(`${BASE_URL}/users/logout`,{
+        const response = await axios.post(`${BASE_URL}/users/logout`,null,
+            {
             headers:{
                 'X-CSRFToken':csrfToken
             },

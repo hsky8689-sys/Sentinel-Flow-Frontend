@@ -240,10 +240,6 @@
     color: greenyellow;
     font-size: 1.2rem;
 }
-input::placeholder,
-textarea::placeholder{
-    color: greenyellow;
-}
 .sectionContent{
     display: flex;
     flex-direction: row;
@@ -361,28 +357,6 @@ textarea::placeholder{
     background-color: green;
     transform: scale(1.1);
 }
-#sections::-webkit-scrollbar,
-#userProjects::-webkit-scrollbar,
-#techStackContainer::-webkit-scrollbar{
-    width: 15px;
-    height: 20px;
-}
-#sections::-webkit-scrollbar-track,
-#userProjects::-webkit-scrollbar-track,
-#techStackContainer::-webkit-scrollbar-track {
-  background: transparent; 
-}
-#sections::-webkit-scrollbar-thumb,
-#userProjects::-webkit-scrollbar-thumb,
-#techStackContainer::-webkit-scrollbar-thumb{
-  background-color: #555555; 
-  border-radius: 20px;
-  border: 3px solid transparent;
-  background-clip: padding-box;
-}
-#sections::-webkit-scrollbar-thumb:hover {
-  background-color: #888888; 
-}
 .addBtn{
     font-size: 1rem;
     background-color: green;
@@ -392,27 +366,10 @@ textarea::placeholder{
     width: 50%;
     justify-content: center;
 }
-#mainPfpContainer, 
-#mainPfpContainer input, 
-#mainPfpContainer textarea, 
-#mainPfpContainer button,
-#mainPfpContainer select {
-    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
-}
-.sectionTitle h2, .projectSection h2, .techSectionBox h3 {
-    font-weight: 700;
-    letter-spacing: -0.5px;
-}
 .sectionContent {
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: 0.2px;
-}
-input::placeholder,
-textarea::placeholder {
-    font-family: 'Space Grotesk', sans-serif;
-    font-weight: 400;
-    opacity: 0.6;
 }
 .sectionContentInput,
 .projectDescription{
