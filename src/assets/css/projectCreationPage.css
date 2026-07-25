@@ -1,0 +1,67 @@
+#projectCreationPage {
+    display: flex;
+    flex-direction: column;
+    width: 96vw;
+    margin: 0 auto;
+    margin-top: 2vh;
+    box-sizing: border-box;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: center;
+    gap: 20px;
+}
+.projectCreationForm {
+    background-color: #1a1a1a;
+    color: #fff;
+    border: 2px green solid;
+    border-radius: 10px;
+    width: 60vw;
+    padding: 25px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.projectNameInput {
+    width: 100%;
+    background-color: #1a1a1a;
+    color: greenyellow;
+    border: 2px green solid;
+    border-radius: 10px;
+    height: 5vh;
+    font-size: 1rem;
+    padding: 0 12px;
+    box-sizing: border-box;
+}
+.githubReposContainer,
+.neededSkillsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.repoEntry {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.repoEntryFields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.repoEntryActions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+.sectionHeading {
+    align-self: flex-start;
+    color: greenyellow;
+    font-size: 1.2rem;
+    margin: 0;
+}
+.skillsInputRow {
+    display: flex;
+    gap: 10px;
+}

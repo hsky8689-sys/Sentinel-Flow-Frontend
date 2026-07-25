@@ -1,4 +1,8 @@
+import { NavigationBar } from "./ProfilePage";
 function ProjectPage(){
-    return (<></>);
+    return (
+    <div>
+        <NavigationBar/>
+    </div>);
 }
 export default ProjectPage;
