@@ -10,7 +10,7 @@ function GithubReposInput({repos,
     const [newName,setNewName] = useState('');
     const [newURL,setNewURL] = useState('');
     const [newToken,setNewToken] = useState('');
-    
+
     const resetForm = () => {
         setNewName('');
         setNewURL('');
@@ -20,9 +20,9 @@ function GithubReposInput({repos,
     useEffect(()=>{
         const foundRepo = repos.find(repo=>repo.id === selectedId);
         if(foundRepo !== undefined){
-            setNewName(foundRepo.name);
-            setNewURL(foundRepo.link);
-            setNewToken(foundRepo.token);
+            setNewName(foundRepo.github_repo_name);
+            setNewURL(foundRepo.github_repo_link);
+            setNewToken(foundRepo.github_repo_token);
         }
         else resetForm();
     },[selectedId]);
@@ -32,9 +32,9 @@ function GithubReposInput({repos,
         const oldLen = repos.length;
         const entity = {
             id:oldLen+1,
-            name:newName,
-            link:newURL,
-            token:newToken
+            github_repo_name:newName,
+            github_repo_link:newURL,
+            github_repo_token:newToken
         }
         const newRepos = Array.of(...repos,entity);
         setRepos(newRepos);
@@ -46,9 +46,9 @@ function GithubReposInput({repos,
             if(repo.id === selectedId){
                 return {
                     id:selectedId,
-                    name:newName,
-                    link:newURL,
-                    token:newToken
+                    github_repo_name:newName,
+                    github_repo_link:newURL,
+                    github_repo_token:newToken
                 }
             }
             return repo;
@@ -96,23 +96,23 @@ function GithubRepos({repos,setRepos,selectedId,setSelectedId}){
         {
             (Array.isArray(repos) ? repos : Object.values(repos))
             .map((repo)=>{
-                const {id,name,link,token} = repo;
+                const {id,github_repo_name,github_repo_link,github_repo_token} = repo;
                 return (
                     <div key={id} className="profileSectionBox repoEntry">
                         <div className="repoEntryFields">
                             <input type="text"
                                    className="addSectionInput"
-                                   value={name}
+                                   value={github_repo_name}
                                    readOnly={true}
                             />
                             <input type="text"
                                    className="addSectionInput"
-                                   value={link}
+                                   value={github_repo_link}
                                    readOnly={true}
                             />
                             <input type="text"
                                    className="addSectionInput"
-                                   value={token}
+                                   value={github_repo_token}
                                    readOnly={true}
                             />
                         </div>
@@ -373,7 +373,7 @@ function NeededSkills({skills,setSkills}){
 }
 function ProjectCreationPage(){
     const nav = useNavigate();
-    
+
     const [name,setName] = useState('');
     const [description,setDescription] = useState('');
     const [githubRepos,setGithubRepos] = useState([]);
@@ -381,7 +381,8 @@ function ProjectCreationPage(){
     const [selectedRepoId,setSelectedRepoId] = useState(-1);//for repository modification
 
     const handleProjectCreation = async () => {
-        const response = await createProject(name,description,githubRepos,neededSkills);
+        const repoPayload = githubRepos.map(({id, ...rest}) => rest);
+        const response = await createProject(name,description,neededSkills,repoPayload);
         if(typeof response === 'string' && response !== ''){
             nav(`/project-page/${response}`);
         }
