@@ -479,7 +479,7 @@ function UserProjects({projects}){
                     <h2 className='projectPageLinkContainer'>
                       <Link to={`/project-page/${name}`} className='projectPageLink'>{name}</Link>
                     </h2>
-                    <div className='projectDescription'>{description}</div>
+                    <div className='userProjectDescription'>{description}</div>
                   </div>
                 );
             })

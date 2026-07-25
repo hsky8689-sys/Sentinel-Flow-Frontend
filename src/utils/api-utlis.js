@@ -332,3 +332,18 @@ export async function createProject(name,description,neededSkills,githubRepos){
     }
     return '';
 }
+export async function accesInbox(){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/users/connections-page`;
+        const response = await axios.get(url,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data;
+    }catch(error){
+        console.log(`Could not create project due to error ${error}`)
+    }
+    return {};
+}
