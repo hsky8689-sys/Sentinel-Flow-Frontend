@@ -246,22 +246,6 @@ export async function sendFriendRequest(receiverId){
     }
     return -1;
 }
-export async function acceptFriendRequest(requestId){
-    const cookie = searchCookie('csrftoken');
-    const url = `${BASE_URL}/users/friend-requests/${requestId}`;
-    const body = {'status':'pending'};
-    try{
-        const response = await axios.patch(url,body,{
-                headers:{
-                    'X-CSRFToken':cookie},
-                    withCredentials:true
-            });
-        return response.data.status === 'success';
-    }catch(error){
-        console.log(`Could not send accept request because of error ${error}`);
-    }
-    return false;
-}
 export async function deleteFriendRequest(requestId){
     try{
         const cookie = searchCookie('csrftoken');
@@ -275,22 +259,6 @@ export async function deleteFriendRequest(requestId){
         return response.data.status === 'success';
     }catch(error){
         console.log(`Could not delete friend request because of error ${error}`);
-    }
-    return false;
-}
-export async function removeFriend(userId){
-    try{
-        const cookie = searchCookie('csrftoken');
-        const url = `${BASE_URL}/users/${userId}/friendship`;
-        const response = await axios.delete(url,{
-            headers:{
-                    'X-CSRFToken':cookie},
-                    withCredentials:true
-                }
-        );
-        return response.data.status === 'success';
-    }catch(error){
-        console.log(`Could not remove friend because of error ${error}`);
     }
     return false;
 }
@@ -346,4 +314,164 @@ export async function accesInbox(){
         console.log(`Could not create project due to error ${error}`)
     }
     return {};
+}
+export async function acceptFriendRequest(requestId){
+    const cookie = searchCookie('csrftoken');
+    const url = `${BASE_URL}/users/friend-requests/${requestId}`;
+    const body = {'status':'pending'};
+    try{
+        const response = await axios.patch(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not send accept request because of error ${error}`);
+    }
+    return false;
+}
+export async function removeFriend(userId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/users/${userId}/friendship`;
+        const response = await axios.delete(url,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+                }
+        );
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not remove friend because of error ${error}`);
+    }
+    return false;
+}
+export async function acceptProjectJoinRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/project/handle`;
+        const body = {action: 'accept', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not accept project join request because of error ${error}`);
+    }
+    return false;
+}
+export async function declineProjectJoinRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/project/handle`;
+        const body = {action: 'decline', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not decline project join request because of error ${error}`);
+    }
+    return false;
+}
+export async function acceptProjectInvite(inviteId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/invites/${inviteId}`;
+        const body = {status: 'accepted'};
+        const response = await axios.patch(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not accept project invite because of error ${error}`);
+    }
+    return false;
+}
+export async function declineProjectInvite(inviteId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/invites/${inviteId}`;
+        const response = await axios.delete(url,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+                }
+        );
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not decline project invite because of error ${error}`);
+    }
+    return false;
+}
+export async function acceptFileAccessRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/file-access/handle`;
+        const body = {response: 'accept', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not accept file access request because of error ${error}`);
+    }
+    return false;
+}
+export async function declineFileAccessRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/file-access/handle`;
+        const body = {response: 'decline', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not decline file access request because of error ${error}`);
+    }
+    return false;
+}
+export async function acceptMoveFileAccessRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/file-writers/handle`;
+        const body = {response: 'ACCEPT', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not accept move file access request because of error ${error}`);
+    }
+    return false;
+}
+export async function declineMoveFileAccessRequest(senderId, receiverId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/requests/file-writers/handle`;
+        const body = {response: 'DENY', sender_id: senderId, receiver_id: receiverId};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not decline move file access request because of error ${error}`);
+    }
+    return false;
 }
