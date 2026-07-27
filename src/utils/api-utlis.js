@@ -475,3 +475,163 @@ export async function declineMoveFileAccessRequest(senderId, receiverId){
     }
     return false;
 }
+// --- Deschidere / rezolvare conversație ---
+export async function openChatRoom(convId = null, user1o1 = null){
+    try{
+        const params = new URLSearchParams();
+        if(convId !== null) params.append('conv_id', convId);
+        if(user1o1 !== null) params.append('user_1o1', user1o1);
+        const url = `${BASE_URL}/chat/?${params.toString()}`;
+        const response = await axios.get(url,{withCredentials:true});
+        return response.data.status === 'success' ? response.data : null;
+        // -> {chat_id, user_101, user_id} ; chat_id === -1 inseamna ca nu exista inca conversatie
+    }catch(error){
+        console.log(`Could not open chat room because of error ${error}`);
+    }
+    return null;
+}
+// --- Istoricul mesajelor unei conversatii ---
+export async function loadChatMessages(conversationId, pageNumber, pageSize){
+    try{
+        const url = `${BASE_URL}/chat/api/${conversationId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        const response = await axios.get(url,{withCredentials:true});
+        return response.data.success ? response.data.content : null;
+        // -> [{sender_id, content, timestamp}, ...]
+    }catch(error){
+        console.log(`Could not load chat messages because of error ${error}`);
+    }
+    return null;
+}
+
+// --- Trimitere mesaj (salveaza in DB SI trimite pe websocket) ---
+export async function sendMessage(content, conversationId = null, user1o1 = null){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/chat/api/message`;
+        const body = {content};
+        if(conversationId !== null) body.conversation_id = conversationId;
+        if(user1o1 !== null) body.user_1o1 = user1o1;
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.success ? response.data.conversation_id : null;
+    }catch(error){
+        console.log(`Could not send message because of error ${error}`);
+    }
+    return null;
+}
+
+// --- Conversatii de grup pe proiect ---
+export async function loadProjectConversations(projectId, pageNumber, pageSize){
+    try{
+        const url = `${BASE_URL}/chat/conversations/projects/${projectId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        const response = await axios.get(url,{withCredentials:true});
+        return response.data.success ? response.data.content : null;
+        // -> [{id, last_message, is_group}, ...]
+    }catch(error){
+        console.log(`Could not load project conversations because of error ${error}`);
+    }
+    return null;
+}
+
+export async function createProjectGroupConversation(projectId, memberIds){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/chat/conversations/projects/${projectId}`;
+        const body = {member_ids: memberIds};
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.success ? response.data.conversation_id : null;
+    }catch(error){
+        console.log(`Could not create project conversation because of error ${error}`);
+    }
+    return null;
+}
+
+export async function deleteProjectConversation(projectId, conversationId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/chat/conversations/projects/${projectId}`;
+        const body = {conversation_id:conversationId}
+        const response = await axios.delete(url,body,{
+            headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+        }
+        );
+        return response.data.success === true;
+    }catch(error){
+        console.log(`Could not delete project conversation because of error ${error}`);
+    }
+    return false;
+}
+export async function loadUserConversations(pageNumber, pageSize){
+    try{
+         const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/chat/conversations?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+        const response = await axios.get(url,{
+            headers:{
+                'X-CSRFToken': cookie
+            },
+            withCredentials:true
+        });
+        return response.data.success ? response.data : null;
+    }catch(error){
+        console.log(`Could not load conversations because of error ${error}`);
+    }
+    return null;
+}
+export async function loadProjectPage(projectName){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/project-page/${projectName}`;
+        const response = await axios.get(url,{
+            headers:{
+                'X-CSRFToken': cookie
+            },
+            withCredentials:true
+        });
+        console.log(JSON.stringify(response.data.stats));
+        return response.status === 200 ? response.data.stats : null;
+    }catch(error){
+        console.log(`Could not load project page due to error ${error}`);
+    }
+    return null;
+}
+export async function requestProjectJoin(projectId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/api/${projectId}/request-join`;
+        const response = await axios.post(url,null,{
+            headers:{
+                'X-CSRFToken': cookie
+            },
+            withCredentials:true
+        });
+        return response.status === 200;
+    }catch(error){
+        console.log(`Could not load project page due to error ${error}`);
+    }
+    return false;
+}
+export async function leaveProject(projectId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/${projectId}/project-exit`;
+        const response = await axios.delete(url,{
+            headers:{
+                'X-CSRFToken': cookie
+            },
+            withCredentials:true
+        });
+        return response.status === 200;
+    }catch(error){
+        console.log(`Could not load project page due to error ${error}`);
+    }
+    return false;
+}

@@ -1,25 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavigationBar } from "./ProfilePage";
+import { loadUserConversations } from "./utils/api-utlis";
 import './assets/css/chatPage.css'
 
+const PAGE_SIZE = 20;
+
 function ConversationHeader({conversation,isActive,onClick}){
-    const {display_name,profile_picture} = conversation;
+    const {name} = conversation;
     return (
         <div className={`conversationHeaderItem${isActive ? ' activeConversation' : ''}`}
              onClick={onClick}
         >
-            {profile_picture && (
-                <div className="conversationAvatar">
-                    <img src={profile_picture} alt={display_name}/>
-                </div>
-            )}
-            <span className="conversationHeaderName">{display_name}</span>
+            <span className="conversationHeaderName">{name}</span>
         </div>
     );
 }
-function ConversationsList({conversations,selectedId,onSelect}){
+function ConversationsList({conversations,selectedId,onSelect,onScroll}){
     return (
-        <div id="conversationsList">
+        <div id="conversationsList" onScroll={onScroll}>
             {conversations.map((conversation)=>(
                 <ConversationHeader key={conversation.id}
                                      conversation={conversation}
@@ -44,7 +42,7 @@ function ConversationView({conversation,messages,currentUserId,newMessage,setNew
     return (
         <div id="conversationView">
             <div id="conversationViewHeader">
-                {conversation.display_name}
+                <span className="conversationViewName">{conversation.name}</span>
             </div>
             <div id="messagesArea">
                 {messages.map((message)=>(
@@ -70,9 +68,45 @@ function ChatPage(){
     const [selectedConversationId,setSelectedConversationId] = useState(null);
     const [messages,setMessages] = useState([]);
     const [newMessage,setNewMessage] = useState('');
-    const currentUserId = null; // TODO: pull the logged-in user's id from somewhere
+    const [currentUserId,setCurrentUserId] = useState(null);
+    const [pageNumber,setPageNumber] = useState(1);
+    const [hasMoreConversations,setHasMoreConversations] = useState(true);
+    const [isLoadingMore,setIsLoadingMore] = useState(false);
 
-    // TODO: fetch the conversations list from the backend on mount and setConversations(...)
+    const fetchConversations = async (page) => {
+        if(!hasMoreConversations || isLoadingMore) return;
+        setIsLoadingMore(true);
+        const data = await loadUserConversations(page,PAGE_SIZE);
+        if(!data){
+            setIsLoadingMore(false);
+            return;
+        }
+        if(data.content.length === 0){
+            setHasMoreConversations(false);
+            setIsLoadingMore(false);
+            return;
+        }
+        setConversations(prev => {
+            const merged = page === 1 ? data.content : [...prev, ...data.content];
+            return [...merged].sort((a,b) => new Date(b.last_message) - new Date(a.last_message));
+        });
+        setCurrentUserId(data.user_id);
+        setIsLoadingMore(false);
+    };
+
+    useEffect(() => {
+        fetchConversations(1);
+    }, []);
+
+    const handleConversationsScroll = (e) => {
+        const el = e.target;
+        const reachedBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 5;
+        if(reachedBottom && hasMoreConversations && !isLoadingMore){
+            const nextPage = pageNumber + 1;
+            setPageNumber(nextPage);
+            fetchConversations(nextPage);
+        }
+    };
 
     const selectedConversation = conversations.find(c => c.id === selectedConversationId) || null;
 
@@ -108,6 +142,7 @@ function ChatPage(){
                 <ConversationsList conversations={conversations}
                                     selectedId={selectedConversationId}
                                     onSelect={handleSelectConversation}
+                                    onScroll={handleConversationsScroll}
                 />
             </div>
         </div>

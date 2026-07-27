@@ -18,7 +18,7 @@ function App() {
               <Route path='/user-profile/:username' element={<ProfilePage/>}></Route>
               <Route path="/search-page" element={<SearchPage/>}></Route>
               <Route path='/project-creation-page' element={<ProjectCreationPage/>}></Route>
-              <Route path="/project-page/:project-name" element={<ProjectPage/>}></Route>
+              <Route path="/project-page/:project" element={<ProjectPage/>}></Route>
               <Route path="/chat-conversations" element={<ChatPage/>}></Route>
               <Route path="/inbox" element={<InboxPage/>}></Route>
           </Routes>
