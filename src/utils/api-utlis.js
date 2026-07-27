@@ -740,3 +740,67 @@ export async function updateProjectTask(projectId, taskId, updates = {}){
     }
     return false;
 }
+export async function assignUsersToRole(projectId, roleId, usernames) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/roles/assign`,
+            { role_id: roleId, usernames: usernames },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function kickUsersFromProject(projectId, usernames) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/kick`,
+            { usernames: usernames },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function editProjectRole(projectId, roleId, updatedFields) {
+    try {
+        const response = await axios.patch(
+            `${BASE_URL}/projects/settings/${projectId}/roles`,
+            { role_id: roleId, ...updatedFields },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getRolePermissions(projectId, roleName) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/settings/${projectId}/role-permissions`,
+            {
+                params: { role_name: roleName },
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

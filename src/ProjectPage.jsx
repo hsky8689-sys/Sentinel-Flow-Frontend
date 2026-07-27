@@ -9,7 +9,11 @@ import { loadProjectPage,
          fetchRepoBranches,
          createProjectTask,
          deleteProjectTasks,
-         updateProjectTask
+         updateProjectTask,
+         assignUsersToRole,
+         kickUsersFromProject,
+         editProjectRole,
+         getRolePermissions
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 function SectionNavbar({setCurrentSection}){
@@ -135,11 +139,34 @@ function Preview({data}){
         </div>
     );
 }
-function MainPage(){
-    //TODO
+function MainPage({tasks}){
+    return (
+        <div id="mainPageContainer">
+            <div id="mainPageLeft">
+            </div>
+            <div id="mainPageRight">
+                <h2 className="sectionHeading">Project tasks</h2>
+                {(tasks || []).map((task)=>(
+                    <div key={task.id} className="profileSectionBox taskEntry">
+                        <div className="taskEntryHeader">
+                            <h3 className="sectionTitle">{task.name}</h3>
+                            <input type="checkbox" checked={task.finished} disabled readOnly/>
+                        </div>
+                        <div className="taskDates">
+                            <span>Start: {task.start_date}</span>
+                            <span>End: {task.end_date}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 }
 function Settings(){
-    //TODO
+    return (
+        <div id="settingsContainer">
+        </div>
+    );
 }
 function GithubTreeNode({owner,repo,branch,item,onFileSelect,selectedFiles}){
     const [expanded,setExpanded] = useState(false);
@@ -550,11 +577,169 @@ function Tasks({tasks,
         </div>
     );
 }
-function Roles(){
-    //TODO
+function RoleSection({roleName,users,projectId}){
+    const [permissions,setPermissions] = useState(null);
+    useEffect(() => {
+        if(!projectId || !roleName) return;
+        const fetchPermissions = async () => {
+            const result = await getRolePermissions(projectId,roleName);
+            setPermissions(result);
+        };
+        fetchPermissions();
+    }, [projectId,roleName]);
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">{roleName}</h3>
+            <div className="skillsGrid">
+                {(users || []).map(u => (
+                    <span key={u.id} className="skillBadge">
+                        <span>{u.username}</span>
+                    </span>
+                ))}
+            </div>
+            <div className="rolePermissionsGrid">
+                {Object.entries(permissions?.permissions || {}).map(([key,value]) => (
+                    <label key={key} className="rolePermissionLabel">
+                        <input type="checkbox" style={{background:'black'}}checked={!!value} disabled readOnly/>
+                        {key}
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
 }
-function GroupChat(){
-    //TODO
+function NewRoleForm({permissionKeys,projectUsers}){
+    const [roleName,setRoleName] = useState('');
+    const [selectedPermissions,setSelectedPermissions] = useState({});
+    const [selectedUsers,setSelectedUsers] = useState([]);
+
+    const togglePermission = (key) => {
+        setSelectedPermissions(prev => ({...prev, [key]: !prev[key]}));
+    };
+    const addUser = (username) => {
+        if(username && !selectedUsers.includes(username)) setSelectedUsers(prev => [...prev, username]);
+    };
+    const removeUser = (username) => {
+        setSelectedUsers(prev => prev.filter(u => u !== username));
+    };
+    const handleCreateRole = () => {
+        if(roleName.trim() === '') return;
+        // TODO: send create-role request to backend
+    };
+
+    return (
+        <div className="technicalSkillInputs">
+            <input type="text"
+                   className="addSectionInput"
+                   placeholder="New role name..."
+                   value={roleName}
+                   onChange={(e)=>setRoleName(e.target.value)}
+            />
+            <div className="rolePermissionsGrid">
+                {permissionKeys.map(key => (
+                    <label key={key} className="rolePermissionLabel">
+                        <input type="checkbox"
+                               checked={!!selectedPermissions[key]}
+                               onChange={()=>togglePermission(key)}
+                        />
+                        {key}
+                    </label>
+                ))}
+            </div>
+            <select className="sectionSelect"
+                    value=""
+                    onChange={(e)=>addUser(e.target.value)}
+            >
+                <option value="">Add user to this role...</option>
+                {projectUsers.filter(u=>!selectedUsers.includes(u)).map(u=>(
+                    <option key={u} value={u}>{u}</option>
+                ))}
+            </select>
+            <div className="taskBadgeList">
+                {selectedUsers.map(u=>(
+                    <span key={u} className="skillBadge">
+                        <span>{u}</span>
+                        <button type="button" className="deleteBtn" onClick={()=>removeUser(u)}>X</button>
+                    </span>
+                ))}
+            </div>
+            <button type="button" className="addBtn" onClick={handleCreateRole}>
+                Create role
+            </button>
+        </div>
+    );
+}
+function Roles({data}){
+    if(!data) return null;
+    const staff = data.staff || {};
+    const permissionKeys = Object.keys(data.visitor_permissions || {});
+    const projectUsers = Object.values(staff).flat().map(u=>u.username);
+    return (
+        <div id="rolesContainer">
+            {Object.entries(staff).map(([roleName,users])=>(
+                <RoleSection key={roleName} roleName={roleName} users={users} projectId={data.project_id}/>
+            ))}
+            <NewRoleForm permissionKeys={permissionKeys} projectUsers={projectUsers}/>
+        </div>
+    );
+}
+function GroupChatMessage({message,currentUserId}){
+    const isOwnMessage = message.sender_id === currentUserId;
+    return (
+        <span className={`chatMessage ${isOwnMessage ? 'ownMessage' : 'otherMessage'}`}>
+            {message.content}
+        </span>
+    );
+}
+function GroupChat({data}){
+    const [messages,setMessages] = useState([]);
+    const [newMessage,setNewMessage] = useState('');
+    const currentUserId = data?.user_id ?? null;
+
+    useEffect(() => {
+        // TODO: fetch messages for this project's group conversation and setMessages(...)
+    }, [data?.project_id]);
+
+    const handleSend = () => {
+        if(newMessage.trim() === '') return;
+        const newMsg = {
+            id: Date.now(),
+            sender_id: currentUserId,
+            content: newMessage.trim()
+        };
+        setMessages(prev => [...prev, newMsg]);
+        setNewMessage('');
+        // TODO: send the message to the backend for this project's group conversation
+    };
+
+    return (
+        <div id="chatContainer">
+            <div id="conversationView">
+                <div id="conversationViewHeader">
+                    <span className="conversationViewName">{data?.project_name} conversation</span>
+                </div>
+                <div id="messagesArea">
+                    {messages.map((message)=>(
+                        <GroupChatMessage key={message.id} message={message} currentUserId={currentUserId}/>
+                    ))}
+                </div>
+                <div id="messageInputRow">
+                    <textarea id="messageInput"
+                              value={newMessage}
+                              onChange={(e)=>setNewMessage(e.target.value)}
+                              placeholder="Type a message..."
+                    />
+                    <button type="button" id="sendMessageBtn" onClick={handleSend}>Send</button>
+                </div>
+            </div>
+            <div id="conversationsList">
+                <div className="conversationHeaderItem activeConversation">
+                    <span className="conversationHeaderName">{data?.project_name} group chat</span>
+                </div>
+            </div>
+        </div>
+    );
 }
 function RenderCurrentSection({currentSection,
                                data,
@@ -582,7 +767,7 @@ function RenderCurrentSection({currentSection,
         case 'preview':
             return <Preview data={data}/>
         case 'main':
-            return <MainPage/>
+            return <MainPage tasks={tasks}/>
         case 'settings':
             return <Settings/>
         case 'tasks': {
@@ -605,9 +790,9 @@ function RenderCurrentSection({currentSection,
                     />
         }
         case 'roles':
-            return <Roles/>
+            return <Roles data={data}/>
         case 'group_chat':
-            return <GroupChat/>
+            return <GroupChat data={data}/>
         default:
             return <h1>Unknown section requested:{currentSection}</h1>
     }

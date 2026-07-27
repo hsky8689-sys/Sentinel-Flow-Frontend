@@ -201,3 +201,67 @@
     font-size: 0.8rem;
     font-style: italic;
 }
+#rolesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-height: 75vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+.rolePermissionsGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.rolePermissionLabel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: greenyellow;
+    background-color: #000;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+.rolePermissionLabel input[type="checkbox"] {
+    accent-color: greenyellow;
+}
+#settingsContainer {
+    background-color: #1a1a1a;
+    border: 2px green solid;
+    border-radius: 10px;
+    width: 100%;
+    min-height: 75vh;
+    box-sizing: border-box;
+    padding: 20px;
+}
+#mainPageContainer {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 20px;
+    min-height: 75vh;
+}
+#mainPageLeft {
+    flex: 3;
+    background-color: #1a1a1a;
+    border: 2px green solid;
+    border-radius: 10px;
+    box-sizing: border-box;
+    padding: 20px;
+}
+#mainPageRight {
+    flex: 1;
+    background-color: #1a1a1a;
+    border: 2px green solid;
+    border-radius: 10px;
+    box-sizing: border-box;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
