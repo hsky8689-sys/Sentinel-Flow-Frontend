@@ -596,7 +596,6 @@ export async function loadProjectPage(projectName){
             },
             withCredentials:true
         });
-        console.log(JSON.stringify(response.data.stats));
         return response.status === 200 ? response.data.stats : null;
     }catch(error){
         console.log(`Could not load project page due to error ${error}`);
@@ -632,6 +631,112 @@ export async function leaveProject(projectId){
         return response.status === 200;
     }catch(error){
         console.log(`Could not load project page due to error ${error}`);
+    }
+    return false;
+}
+export async function getProjectTasks(projectId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/settings/${projectId}/tasks`;
+        const response = await axios.get(url,{
+            headers:{
+                'X-CSRFToken': cookie
+            },
+            withCredentials:true
+        });
+        console.log(response.data.tasks);
+        return response.status === 200 ? response.data.tasks : [];
+    }catch(error){
+        console.log(`Could not load project page due to error ${error}`);
+    }
+    return [];
+}
+export async function fetchRepoBranches(projectName,repoId){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const params = new URLSearchParams({project: projectName});
+        if(repoId !== undefined && repoId !== null) params.append('repo_id', repoId);
+        const url = `${BASE_URL}/projects/api/github/branches?${params.toString()}`;
+        const response = await axios.get(url,{
+            headers:{'X-CSRFToken':cookie},
+            withCredentials:true
+        });
+        return response.data.status === 'success' ? response.data.branches : [];
+    }catch(error){
+        console.log(`Could not fetch repo branches due to error ${error}`);
+    }
+    return [];
+}
+export async function fetchGithubStructure(owner,repo,path='',branch=null){
+    try{
+        const cookie = searchCookie('csrftoken');
+        let url = path
+            ? `${BASE_URL}/projects/api/github/${owner}/${repo}/${path}`
+            : `${BASE_URL}/projects/api/github/${owner}/${repo}`;
+        if(branch) url += `?branch=${encodeURIComponent(branch)}`;
+        const response = await axios.get(url,{
+            headers:{'X-CSRFToken':cookie},
+            withCredentials:true
+        });
+        return Array.isArray(response.data) ? response.data : [];
+    }catch(error){
+        console.log(`Could not fetch github structure due to error ${error}`);
+    }
+    return [];
+}
+export async function createProjectTask(projectId, title, description, startDate, endDate, usernames = [], resourcePaths = []){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/settings/${projectId}/tasks`;
+        const body = {
+            title,
+            description,
+            start_date: startDate,
+            end_date: endDate,
+            usernames,
+            resource_paths: resourcePaths
+        };
+        const response = await axios.post(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success' ? response.data : null;
+    }catch(error){
+        console.log(`Could not create task because of error ${error}`);
+    }
+    return null;
+}
+export async function deleteProjectTasks(projectId, taskNames){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/settings/${projectId}/tasks`;
+        const response = await axios.delete(url,{
+            headers:{
+                'X-CSRFToken':cookie
+            },
+            withCredentials:true,
+            data:{removedTasks:taskNames}
+        });
+        return response.data.status === 'succes' || response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not delete tasks because of error ${error}`);
+    }
+    return false;
+}
+export async function updateProjectTask(projectId, taskId, updates = {}){
+    try{
+        const cookie = searchCookie('csrftoken');
+        const url = `${BASE_URL}/projects/settings/${projectId}/tasks`;
+        const body = { task_id: taskId, ...updates };
+        const response = await axios.patch(url,body,{
+                headers:{
+                    'X-CSRFToken':cookie},
+                    withCredentials:true
+            });
+        return response.data.status === 'success';
+    }catch(error){
+        console.log(`Could not update task because of error ${error}`);
     }
     return false;
 }
