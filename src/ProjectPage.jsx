@@ -13,7 +13,9 @@ import { loadProjectPage,
          assignUsersToRole,
          kickUsersFromProject,
          editProjectRole,
-         getRolePermissions
+         getRolePermissions,
+         runCode,
+         getAvailableLanguages
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 function SectionNavbar({setCurrentSection}){
@@ -139,10 +141,169 @@ function Preview({data}){
         </div>
     );
 }
-function MainPage({tasks}){
+function MainPageFileBrowser({owner,repo,branch}){
+    const [currentPath,setCurrentPath] = useState('');
+    const [pathHistory,setPathHistory] = useState([]);
+    const [items,setItems] = useState(null);
+    const [loading,setLoading] = useState(false);
+
+    useEffect(() => {
+        setCurrentPath('');
+        setPathHistory([]);
+    }, [owner,repo,branch]);
+
+    useEffect(() => {
+        if(!owner || !repo || !branch) return;
+        let cancelled = false;
+        setLoading(true);
+        fetchGithubStructure(owner,repo,currentPath,branch).then(result => {
+            if(!cancelled){
+                setItems(result);
+                setLoading(false);
+            }
+        });
+        return () => { cancelled = true; };
+    }, [owner,repo,branch,currentPath]);
+
+    const handleEnterFolder = (path) => {
+        setPathHistory(prev => [...prev, currentPath]);
+        setCurrentPath(path);
+    };
+    const handleGoBack = () => {
+        setPathHistory(prev => {
+            if(prev.length === 0) return prev;
+            const updated = [...prev];
+            const previousPath = updated.pop();
+            setCurrentPath(previousPath);
+            return updated;
+        });
+    };
+
+    return (
+        <div className="mainPageTreeBrowser">
+            <div className="mainPageTreeHeader">
+                <button type="button"
+                        className="mainPageTreeBackBtn"
+                        onClick={handleGoBack}
+                        disabled={pathHistory.length === 0}
+                >
+                    ⬅ Back
+                </button>
+                <span className="mainPageTreeCurrentPath">{currentPath || '/'}</span>
+            </div>
+            {loading && <span className="githubTreeLoading">Loading...</span>}
+            {items && items.map(item => (
+                <div key={item.path}
+                     className={`githubTreeItem ${item.type === 'dir' ? 'githubTreeDir' : 'githubTreeFile'}`}
+                >
+                    <span onClick={()=> item.type === 'dir' ? handleEnterFolder(item.path) : undefined}>
+                        {item.type === 'dir' ? '📁 ' : '📄 '}{item.name}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+}
+function LanguageDropdown({languages,selectedLanguageId,setSelectedLanguageId}){
+    const [isOpen,setIsOpen] = useState(false);
+    const selectedLanguage = languages.find(l => String(l.id) === String(selectedLanguageId));
+
+    const handleSelect = (id) => {
+        setSelectedLanguageId(id);
+        setIsOpen(false);
+    };
+
+    return (
+        <div className="languageDropdown">
+            <button type="button"
+                    className="languageDropdownToggle"
+                    onClick={()=>setIsOpen(prev => !prev)}
+            >
+                {selectedLanguage ? selectedLanguage.name : 'Select a language...'}
+            </button>
+            {isOpen && (
+                <div className="languageDropdownList">
+                    {languages.map(lang => (
+                        <div key={lang.id}
+                             className="languageDropdownItem"
+                             onClick={()=>handleSelect(lang.id)}
+                        >
+                            {lang.name}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+function MainPage({tasks,data}){
+    const [selectedRepoId,setSelectedRepoId] = useState('');
+    const [branches,setBranches] = useState([]);
+    const [selectedBranch,setSelectedBranch] = useState('');
+    const [languages,setLanguages] = useState([]);
+    const [selectedLanguageId,setSelectedLanguageId] = useState('');
+
+    useEffect(() => {
+        const fetchLanguages = async () => {
+            const result = await getAvailableLanguages();
+            const receivedLanguages = Object.values(result.languages);
+            setLanguages(receivedLanguages);
+        };
+        fetchLanguages();
+    }, []);
+
+    const repos = data?.repos || [];
+    const selectedRepo = repos.find(r => String(r.id) === String(selectedRepoId)) || null;
+
+    useEffect(() => {
+        if(!selectedRepo){
+            setBranches([]);
+            setSelectedBranch('');
+            return;
+        }
+        let cancelled = false;
+        fetchRepoBranches(data?.project_name,selectedRepo.id).then(result => {
+            if(!cancelled){
+                setBranches(result);
+                setSelectedBranch(result.length > 0 ? result[0] : '');
+            }
+        });
+        return () => { cancelled = true; };
+    }, [selectedRepo?.id]);
+
     return (
         <div id="mainPageContainer">
             <div id="mainPageLeft">
+                <select className="sectionSelect"
+                        value={selectedRepoId}
+                        onChange={(e)=>setSelectedRepoId(e.target.value)}
+                >
+                    <option value="">Select a repository...</option>
+                    {repos.map(r => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                </select>
+                <select className="sectionSelect"
+                        value={selectedBranch}
+                        onChange={(e)=>setSelectedBranch(e.target.value)}
+                        disabled={branches.length === 0}
+                >
+                    {branches.length === 0 && <option value="">No branches</option>}
+                    {branches.map(b => (
+                        <option key={b} value={b}>{b}</option>
+                    ))}
+                </select>
+                {selectedRepo && selectedBranch && (
+                    <MainPageFileBrowser owner={selectedRepo.owner} repo={selectedRepo.repo} branch={selectedBranch}/>
+                )}
+                </div>
+                <div id="mainPageCenter">
+                    <div id="mainPageCenter">
+                        <LanguageDropdown languages={Array.isArray(languages)?languages:Object.entries(languages)}
+                                      selectedLanguageId={selectedLanguageId}
+                                      setSelectedLanguageId={setSelectedLanguageId}
+                        />
+                    </div>
             </div>
             <div id="mainPageRight">
                 <h2 className="sectionHeading">Project tasks</h2>
@@ -767,7 +928,7 @@ function RenderCurrentSection({currentSection,
         case 'preview':
             return <Preview data={data}/>
         case 'main':
-            return <MainPage tasks={tasks}/>
+            return <MainPage tasks={tasks} data={data}/>
         case 'settings':
             return <Settings/>
         case 'tasks': {
@@ -814,7 +975,6 @@ function ProjectPage(){
     useEffect(() => {
         const fetchData = async () => {
             const stats = await loadProjectPage(project);
-            console.log(JSON.stringify(stats));
             setData(stats);
         };
         fetchData();

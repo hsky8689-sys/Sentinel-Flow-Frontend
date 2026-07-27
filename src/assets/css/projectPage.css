@@ -251,9 +251,20 @@
     border-radius: 10px;
     box-sizing: border-box;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+#mainPageCenter {
+    flex: 5;
+    background-color: #1a1a1a;
+    border: 2px green solid;
+    border-radius: 10px;
+    box-sizing: border-box;
+    padding: 20px;
 }
 #mainPageRight {
-    flex: 1;
+    flex: 2;
     background-color: #1a1a1a;
     border: 2px green solid;
     border-radius: 10px;
@@ -264,4 +275,74 @@
     gap: 15px;
     max-height: 75vh;
     overflow-y: auto;
+}
+.mainPageTreeBrowser {
+    background-color: #0d0d0d;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 55vh;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mainPageTreeBrowser .githubTreeChildren {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 6px;
+}
+.mainPageTreeBrowser .githubTreeDir > span,
+.mainPageTreeBrowser .githubTreeFile > span {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+}
+.mainPageTreeBrowser .githubTreeDir > span:hover,
+.mainPageTreeBrowser .githubTreeFile > span:hover {
+    background-color: #2a2a2a;
+    border-color: green;
+    text-decoration: none;
+}
+.languageDropdown {
+    position: relative;
+    width: 100%;
+}
+.languageDropdownToggle {
+    width: 100%;
+    background-color: #1a1a1a;
+    color: greenyellow;
+    border: 2px green solid;
+    border-radius: 10px;
+    height: 5vh;
+    font-size: 1rem;
+    text-align: left;
+    padding: 0 10px;
+    cursor: pointer;
+}
+.languageDropdownList {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background-color: #1a1a1a;
+    border: 2px green solid;
+    border-radius: 10px;
+    margin-top: 4px;
+    z-index: 10;
+}
+.languageDropdownItem {
+    padding: 8px 12px;
+    color: greenyellow;
+    cursor: pointer;
+}
+.languageDropdownItem:hover {
+    background-color: #2a2a2a;
 }

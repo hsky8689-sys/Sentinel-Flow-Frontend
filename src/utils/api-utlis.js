@@ -804,3 +804,31 @@ export async function getRolePermissions(projectId, roleName) {
         return null;
     }
 }
+export async function runCode(projectName, sourceCode, languageId = 71) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/code`,
+            { source_code: sourceCode, language_id: languageId, project: projectName },
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getAvailableLanguages(forceRefresh = false) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/available-languages`,
+            {
+                params: forceRefresh ? { invalidate: 'true' } : {},
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
