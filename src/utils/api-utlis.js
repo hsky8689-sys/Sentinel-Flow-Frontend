@@ -832,3 +832,22 @@ export async function getAvailableLanguages(forceRefresh = false) {
         return null;
     }
 }
+export async function getFileContent(owner, repo, path, branch) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/api/github/${owner}/${repo}/${path}`,
+            {
+                params: branch ? { branch } : {},
+                withCredentials: true
+            }
+        );
+        const data = response.data;
+        if (data.encoding === 'base64' && data.content) {
+            data.decodedContent = atob(data.content.replace(/\n/g, ''));
+        }
+        return data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

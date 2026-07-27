@@ -15,9 +15,60 @@ import { loadProjectPage,
          editProjectRole,
          getRolePermissions,
          runCode,
-         getAvailableLanguages
+         getAvailableLanguages,
+         getFileContent
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
+import Editor from "@monaco-editor/react";
+const JUDGE0_TO_MONACO_LANGUAGE = {
+    'assembly': 'plaintext',
+    'bash': 'shell',
+    'basic': 'vb',
+    'c': 'c',
+    'c#': 'csharp',
+    'c++': 'cpp',
+    'clojure': 'clojure',
+    'cobol': 'plaintext',
+    'common lisp': 'plaintext',
+    'd': 'plaintext',
+    'elixir': 'elixir',
+    'erlang': 'erlang',
+    'executable': 'plaintext',
+    'f#': 'fsharp',
+    'fortran': 'fortran',
+    'go': 'go',
+    'groovy': 'groovy',
+    'haskell': 'haskell',
+    'java': 'java',
+    'javascript': 'javascript',
+    'kotlin': 'kotlin',
+    'lua': 'lua',
+    'multi-file program': 'plaintext',
+    'objective-c': 'objective-c',
+    'ocaml': 'plaintext',
+    'octave': 'plaintext',
+    'pascal': 'pascal',
+    'perl': 'perl',
+    'php': 'php',
+    'plain text': 'plaintext',
+    'prolog': 'plaintext',
+    'python': 'python',
+    'python for ml': 'python',
+    'r': 'r',
+    'ruby': 'ruby',
+    'rust': 'rust',
+    'scala': 'scala',
+    'sql': 'sql',
+    'swift': 'swift',
+    'typescript': 'typescript',
+    'visual basic.net': 'vb',
+};
+function mapLanguageNameToMonaco(name){
+    if(!name) return 'plaintext';
+    const firstWord = name.split('(')[0].trim().toLowerCase();
+    if(JUDGE0_TO_MONACO_LANGUAGE[firstWord]) return JUDGE0_TO_MONACO_LANGUAGE[firstWord];
+    return firstWord.replace(/[^a-z0-9]/g, '') || 'plaintext';
+}
 function SectionNavbar({setCurrentSection}){
     return(
         <nav id="projectNavbar">
@@ -141,7 +192,7 @@ function Preview({data}){
         </div>
     );
 }
-function MainPageFileBrowser({owner,repo,branch}){
+function MainPageFileBrowser({owner,repo,branch,setCode}){
     const [currentPath,setCurrentPath] = useState('');
     const [pathHistory,setPathHistory] = useState([]);
     const [items,setItems] = useState(null);
@@ -169,6 +220,13 @@ function MainPageFileBrowser({owner,repo,branch}){
         setPathHistory(prev => [...prev, currentPath]);
         setCurrentPath(path);
     };
+    const handleFileClick = async (path) => {
+        const data = await getFileContent(owner,repo,path,branch);
+        if(data){
+            setCode(data.decodedContent ?? data.content ?? '');
+        }
+    };
+
     const handleGoBack = () => {
         setPathHistory(prev => {
             if(prev.length === 0) return prev;
@@ -196,7 +254,7 @@ function MainPageFileBrowser({owner,repo,branch}){
                 <div key={item.path}
                      className={`githubTreeItem ${item.type === 'dir' ? 'githubTreeDir' : 'githubTreeFile'}`}
                 >
-                    <span onClick={()=> item.type === 'dir' ? handleEnterFolder(item.path) : undefined}>
+                    <span onClick={()=> item.type === 'dir' ? handleEnterFolder(item.path) : handleFileClick(item.path)}>
                         {item.type === 'dir' ? '📁 ' : '📄 '}{item.name}
                     </span>
                 </div>
@@ -242,6 +300,10 @@ function MainPage({tasks,data}){
     const [selectedBranch,setSelectedBranch] = useState('');
     const [languages,setLanguages] = useState([]);
     const [selectedLanguageId,setSelectedLanguageId] = useState('');
+    const [code,setCode] = useState('');
+        const selectedLanguageObj = (Array.isArray(languages)?languages:Object.entries(languages))
+        .find(l => String(l.id) === String(selectedLanguageId));
+    const selectedLanguageName = mapLanguageNameToMonaco(selectedLanguageObj?.name);
 
     useEffect(() => {
         const fetchLanguages = async () => {
@@ -294,7 +356,10 @@ function MainPage({tasks,data}){
                     ))}
                 </select>
                 {selectedRepo && selectedBranch && (
-                    <MainPageFileBrowser owner={selectedRepo.owner} repo={selectedRepo.repo} branch={selectedBranch}/>
+                    <MainPageFileBrowser owner={selectedRepo.owner} 
+                                         repo={selectedRepo.repo} 
+                                         branch={selectedBranch} 
+                                         setCode={setCode}/>
                 )}
                 </div>
                 <div id="mainPageCenter">
@@ -302,6 +367,20 @@ function MainPage({tasks,data}){
                         <LanguageDropdown languages={Array.isArray(languages)?languages:Object.entries(languages)}
                                       selectedLanguageId={selectedLanguageId}
                                       setSelectedLanguageId={setSelectedLanguageId}
+                        />
+                    </div>
+                    <div className="codeEditorWrapper">
+                        <Editor
+                            height="100%"
+                            theme="vs-dark"
+                            language={selectedLanguageName}
+                            value={code}
+                            onChange={(value)=>setCode(value ?? '')}
+                            options={{
+                                fontSize: 14,
+                                minimap: { enabled: false },
+                                scrollBeyondLastLine: false
+                            }}
                         />
                     </div>
             </div>

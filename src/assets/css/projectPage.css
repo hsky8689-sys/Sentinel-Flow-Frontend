@@ -262,6 +262,9 @@
     border-radius: 10px;
     box-sizing: border-box;
     padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 #mainPageRight {
     flex: 2;
@@ -317,13 +320,18 @@
     width: 100%;
     background-color: #1a1a1a;
     color: greenyellow;
-    border: 2px green solid;
+    border: 1px solid green;
     border-radius: 10px;
     height: 5vh;
     font-size: 1rem;
     text-align: left;
     padding: 0 10px;
     cursor: pointer;
+    outline: none;
+}
+.languageDropdownToggle:focus {
+    outline: 1px solid greenyellow;
+    outline-offset: 2px;
 }
 .languageDropdownList {
     position: absolute;
@@ -333,7 +341,7 @@
     max-height: 200px;
     overflow-y: auto;
     background-color: #1a1a1a;
-    border: 2px green solid;
+    border: 1px solid green;
     border-radius: 10px;
     margin-top: 4px;
     z-index: 10;
@@ -345,4 +353,11 @@
 }
 .languageDropdownItem:hover {
     background-color: #2a2a2a;
+}
+.codeEditorWrapper {
+    flex: 1;
+    min-height: 60vh;
+    border: 2px green solid;
+    border-radius: 10px;
+    overflow: hidden;
 }

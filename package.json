@@ -13,10 +13,12 @@
     "@fontsource/inter": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@fontsource/syne": "^5.2.7",
+    "@monaco-editor/react": "^4.7.0",
     "axios": "^1.18.1",
     "dotenv": "^17.4.2",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-router": "^8.3.0",
     "react-router-dom": "^7.18.1",
     "react-use-websocket": "^4.13.0"
   },
