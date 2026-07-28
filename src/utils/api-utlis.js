@@ -724,21 +724,21 @@ export async function deleteProjectTasks(projectId, taskNames){
     }
     return false;
 }
-export async function updateProjectTask(projectId, taskId, updates = {}){
-    try{
-        const cookie = searchCookie('csrftoken');
-        const url = `${BASE_URL}/projects/settings/${projectId}/tasks`;
-        const body = { task_id: taskId, ...updates };
-        const response = await axios.patch(url,body,{
-                headers:{
-                    'X-CSRFToken':cookie},
-                    withCredentials:true
-            });
-        return response.data.status === 'success';
-    }catch(error){
-        console.log(`Could not update task because of error ${error}`);
+export async function updateProjectTask(projectId, taskId, updates) {
+    try {
+        const response = await axios.patch(
+            `${BASE_URL}/projects/settings/${projectId}/tasks`,
+            { task_id: taskId, ...updates },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
     }
-    return false;
 }
 export async function assignUsersToRole(projectId, roleId, usernames) {
     try {
@@ -860,6 +860,19 @@ export async function requestFileAccess(projectId, fileUrls, taskId) {
                 headers: { 'X-CSRFToken': searchCookie('csrftoken') },
                 withCredentials: true
             }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function pushFilesToGithub(projectId, owner, repo, branch, files, message = '') {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/github/pushed-files`,
+            { project: projectId, owner, repo, branch, files, message },
+            { withCredentials: true }
         );
         return response.data;
     } catch (error) {

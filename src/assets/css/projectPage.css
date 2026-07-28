@@ -397,3 +397,33 @@
 .codeOutputError {
     color: #ff6666;
 }
+.pushModalBox {
+    width: 500px;
+    max-width: 90vw;
+    height: auto;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 50px 20px 20px;
+}
+.pushFilesList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+.pushFileItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: greenyellow;
+    font-size: 0.85rem;
+}

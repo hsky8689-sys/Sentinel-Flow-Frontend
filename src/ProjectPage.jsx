@@ -17,7 +17,8 @@ import { loadProjectPage,
          runCode,
          getAvailableLanguages,
          getFileContent,
-         requestFileAccess
+         requestFileAccess,
+         pushFilesToGithub
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 import Editor from "@monaco-editor/react";
@@ -302,6 +303,11 @@ function MainPage({tasks,data}){
     const [selectedFilePath,setSelectedFilePath] = useState('');
     const [runOutput,setRunOutput] = useState(null);
     const [selectedTaskId,setSelectedTaskId] = useState('');
+    const [originalContents,setOriginalContents] = useState({});
+    const [flaggedForPush,setFlaggedForPush] = useState({});
+    const [showPushModal,setShowPushModal] = useState(false);
+    const [pushMessage,setPushMessage] = useState('');
+
     const hasFileAccess = selectedFilePath
         ? data?.files_permissions?.[selectedFilePath] === 'ACCESS'
         : true;
@@ -343,10 +349,45 @@ function MainPage({tasks,data}){
         });
         return () => { cancelled = true; };
     }, [selectedRepo?.id]);
+    
     const handleFileLoaded = (path,fileData) => {
         setSelectedFilePath(path);
-        setCode(fileData?.decodedContent ?? fileData?.content ?? '');
+        const content = fileData?.decodedContent ?? fileData?.content ?? '';
+        setCode(content);
+        setOriginalContents(prev => ({...prev, [path]: content}));
     };
+    const handleCodeChange = (value) => {
+        const newValue = value ?? '';
+        setCode(newValue);
+        if(!selectedFilePath) return;
+        const original = originalContents[selectedFilePath];
+        setFlaggedForPush(prev => {
+            const updated = {...prev};
+            if(newValue !== original){
+                updated[selectedFilePath] = newValue;
+            }else{
+                delete updated[selectedFilePath];
+            }
+            return updated;
+        });
+    };
+    const handleRemoveFlaggedFile = (path) => {
+        setFlaggedForPush(prev => {
+            const updated = {...prev};
+            delete updated[path];
+            return updated;
+        });
+    };
+    const handlePushToGithub = async () => {
+        if(!selectedRepo) return;
+        const response = await pushFilesToGithub(data?.project_id,selectedRepo.owner,selectedRepo.repo,selectedBranch,flaggedForPush,pushMessage);
+        if(response){
+            setFlaggedForPush({});
+            setPushMessage('');
+            setShowPushModal(false);
+        }
+    };
+
     const handleRunCode = async () => {
         const result = await runCode(data?.project_name,code,Number(selectedLanguageId) || 71);
         setRunOutput(result);
@@ -395,7 +436,7 @@ function MainPage({tasks,data}){
                         theme="vs-dark"
                         language={selectedLanguageName}
                         value={code}
-                        onChange={(value)=>setCode(value ?? '')}
+                        onChange={handleCodeChange}
                         options={{
                             fontSize: 14,
                             minimap: { enabled: false },
@@ -403,10 +444,15 @@ function MainPage({tasks,data}){
                         }}
                     />
                 </div>
-                <div className="codeEditorActions">
+                                <div className="codeEditorActions">
                     <button type="button" className="addBtn" onClick={handleRunCode}>
                         Run code
                     </button>
+                    {Object.keys(flaggedForPush).length > 0 && (
+                        <button type="button" className="addBtn" onClick={()=>setShowPushModal(true)}>
+                            Push changes ({Object.keys(flaggedForPush).length})
+                        </button>
+                    )}
                     {!hasFileAccess && selectedFilePath && (
                         <>
                             <select className="sectionSelect"
@@ -424,6 +470,30 @@ function MainPage({tasks,data}){
                         </>
                     )}
                 </div>
+                {showPushModal && (
+                    <div className="modalOverlay" onClick={()=>setShowPushModal(false)}>
+                        <div className="modalBox pushModalBox" onClick={(e)=>e.stopPropagation()}>
+                            <button type="button" className="modalCloseBtn" onClick={()=>setShowPushModal(false)}>X</button>
+                            <input type="text"
+                                   className="addSectionInput"
+                                   placeholder="Push message..."
+                                   value={pushMessage}
+                                   onChange={(e)=>setPushMessage(e.target.value)}
+                            />
+                            <div className="pushFilesList">
+                                {Object.keys(flaggedForPush).map(path => (
+                                    <div key={path} className="pushFileItem">
+                                        <span>{path}</span>
+                                        <button type="button" className="deleteBtn" onClick={()=>handleRemoveFlaggedFile(path)}>X</button>
+                                    </div>
+                                ))}
+                            </div>
+                            <button type="button" className="addBtn" onClick={handlePushToGithub}>
+                                Push to GitHub
+                            </button>
+                        </div>
+                    </div>
+                )}
                 <div className="codeRunOutput">
                     {runOutput && (
                         <>
@@ -671,16 +741,18 @@ function TaskForm({editingTaskId,
             resetForm();
         }
     };
-    const handleModify = async () => {
+        const handleModify = async () => {
         if(name.trim() === '') return;
         const response = await updateProjectTask(projectId,
                                                  editingTaskId,{
-                                                    'name':name,
+                                                    'title':name.trim(),
                                                     'description':description,
                                                     'start_date':startDate,
-                                                    'end_date':endDate
+                                                    'end_date':endDate,
+                                                    'usernames':usernames,
+                                                    'resource_paths':resourcePaths
                                                  });
-        if(response){
+        if(response && response.status === 'success'){
             setTasks(prev => prev.map(t => t.id === editingTaskId
                 ? {...t,
                 name: name.trim(),
@@ -688,9 +760,9 @@ function TaskForm({editingTaskId,
                 start_date: startDate,
                 end_date: endDate,
                 finished,
-                usernames,
+                usernames: response.affiliated_users,
                 repos,
-                resource_paths: resourcePaths}
+                resource_paths: response.resource_paths}
                 : t
             ));
             resetForm();
