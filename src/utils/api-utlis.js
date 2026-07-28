@@ -851,3 +851,19 @@ export async function getFileContent(owner, repo, path, branch) {
         return null;
     }
 }
+export async function requestFileAccess(projectId, fileUrls, taskId) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/file-access`,
+            { project_id: projectId, file_urls: fileUrls, task_id: taskId },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

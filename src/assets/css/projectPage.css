@@ -361,3 +361,39 @@
     border-radius: 10px;
     overflow: hidden;
 }
+.codeEditorActions {
+    display: flex;
+    gap: 10px;
+}
+.codeRunOutput {
+    background-color: #0d0d0d;
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+    padding: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+.codeOutputStatus {
+    color: greenyellow;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+.codeOutputBlock {
+    margin-bottom: 8px;
+}
+.codeOutputLabel {
+    color: green;
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 4px;
+}
+.codeOutputContent {
+    color: greenyellow;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+}
+.codeOutputError {
+    color: #ff6666;
+}

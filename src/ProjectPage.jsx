@@ -16,7 +16,8 @@ import { loadProjectPage,
          getRolePermissions,
          runCode,
          getAvailableLanguages,
-         getFileContent
+         getFileContent,
+         requestFileAccess
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 import Editor from "@monaco-editor/react";
@@ -192,7 +193,7 @@ function Preview({data}){
         </div>
     );
 }
-function MainPageFileBrowser({owner,repo,branch,setCode}){
+function MainPageFileBrowser({owner,repo,branch,onFileLoaded}){
     const [currentPath,setCurrentPath] = useState('');
     const [pathHistory,setPathHistory] = useState([]);
     const [items,setItems] = useState(null);
@@ -222,11 +223,8 @@ function MainPageFileBrowser({owner,repo,branch,setCode}){
     };
     const handleFileClick = async (path) => {
         const data = await getFileContent(owner,repo,path,branch);
-        if(data){
-            setCode(data.decodedContent ?? data.content ?? '');
-        }
+        onFileLoaded(path,data);
     };
-
     const handleGoBack = () => {
         setPathHistory(prev => {
             if(prev.length === 0) return prev;
@@ -301,7 +299,20 @@ function MainPage({tasks,data}){
     const [languages,setLanguages] = useState([]);
     const [selectedLanguageId,setSelectedLanguageId] = useState('');
     const [code,setCode] = useState('');
-        const selectedLanguageObj = (Array.isArray(languages)?languages:Object.entries(languages))
+    const [selectedFilePath,setSelectedFilePath] = useState('');
+    const [runOutput,setRunOutput] = useState(null);
+    const [selectedTaskId,setSelectedTaskId] = useState('');
+    const hasFileAccess = selectedFilePath
+        ? data?.files_permissions?.[selectedFilePath] === 'ACCESS'
+        : true;
+
+    useEffect(() => {
+        if(tasks && tasks.length > 0 && !selectedTaskId){
+            setSelectedTaskId(tasks[0].id);
+        }
+    }, [tasks]);
+
+    const selectedLanguageObj = (Array.isArray(languages)?languages:Object.entries(languages))
         .find(l => String(l.id) === String(selectedLanguageId));
     const selectedLanguageName = mapLanguageNameToMonaco(selectedLanguageObj?.name);
 
@@ -332,6 +343,17 @@ function MainPage({tasks,data}){
         });
         return () => { cancelled = true; };
     }, [selectedRepo?.id]);
+    const handleFileLoaded = (path,fileData) => {
+        setSelectedFilePath(path);
+        setCode(fileData?.decodedContent ?? fileData?.content ?? '');
+    };
+    const handleRunCode = async () => {
+        const result = await runCode(data?.project_name,code,Number(selectedLanguageId) || 71);
+        setRunOutput(result);
+    };
+    const handleRequestFileAccess = async () => {
+        await requestFileAccess(data?.project_id,[selectedFilePath],selectedTaskId || null);
+    };
 
     return (
         <div id="mainPageContainer">
@@ -356,33 +378,82 @@ function MainPage({tasks,data}){
                     ))}
                 </select>
                 {selectedRepo && selectedBranch && (
-                    <MainPageFileBrowser owner={selectedRepo.owner} 
-                                         repo={selectedRepo.repo} 
-                                         branch={selectedBranch} 
-                                         setCode={setCode}/>
+                    <MainPageFileBrowser owner={selectedRepo.owner}
+                                         repo={selectedRepo.repo}
+                                         branch={selectedBranch}
+                                         onFileLoaded={handleFileLoaded}/>
                 )}
+            </div>
+            <div id="mainPageCenter">
+                <LanguageDropdown languages={Array.isArray(languages)?languages:Object.entries(languages)}
+                                  selectedLanguageId={selectedLanguageId}
+                                  setSelectedLanguageId={setSelectedLanguageId}
+                />
+                <div className="codeEditorWrapper">
+                    <Editor
+                        height="100%"
+                        theme="vs-dark"
+                        language={selectedLanguageName}
+                        value={code}
+                        onChange={(value)=>setCode(value ?? '')}
+                        options={{
+                            fontSize: 14,
+                            minimap: { enabled: false },
+                            scrollBeyondLastLine: false
+                        }}
+                    />
                 </div>
-                <div id="mainPageCenter">
-                    <div id="mainPageCenter">
-                        <LanguageDropdown languages={Array.isArray(languages)?languages:Object.entries(languages)}
-                                      selectedLanguageId={selectedLanguageId}
-                                      setSelectedLanguageId={setSelectedLanguageId}
-                        />
-                    </div>
-                    <div className="codeEditorWrapper">
-                        <Editor
-                            height="100%"
-                            theme="vs-dark"
-                            language={selectedLanguageName}
-                            value={code}
-                            onChange={(value)=>setCode(value ?? '')}
-                            options={{
-                                fontSize: 14,
-                                minimap: { enabled: false },
-                                scrollBeyondLastLine: false
-                            }}
-                        />
-                    </div>
+                <div className="codeEditorActions">
+                    <button type="button" className="addBtn" onClick={handleRunCode}>
+                        Run code
+                    </button>
+                    {!hasFileAccess && selectedFilePath && (
+                        <>
+                            <select className="sectionSelect"
+                                    value={selectedTaskId}
+                                    onChange={(e)=>setSelectedTaskId(e.target.value)}
+                            >
+                                <option value="">Select a task...</option>
+                                {(tasks || []).map(task => (
+                                    <option key={task.id} value={task.id}>{task.name}</option>
+                                ))}
+                            </select>
+                            <button type="button" className="denyBtn" onClick={handleRequestFileAccess}>
+                                Request file access
+                            </button>
+                        </>
+                    )}
+                </div>
+                <div className="codeRunOutput">
+                    {runOutput && (
+                        <>
+                            {runOutput.status?.description && (
+                                <div className="codeOutputStatus">Status: {runOutput.status.description}</div>
+                            )}
+                            {runOutput.stdout && (
+                                <div className="codeOutputBlock">
+                                    <span className="codeOutputLabel">Output:</span>
+                                    <pre className="codeOutputContent">{runOutput.stdout}</pre>
+                                </div>
+                            )}
+                            {runOutput.stderr && (
+                                <div className="codeOutputBlock">
+                                    <span className="codeOutputLabel">Error:</span>
+                                    <pre className="codeOutputContent codeOutputError">{runOutput.stderr}</pre>
+                                </div>
+                            )}
+                            {runOutput.compile_output && (
+                                <div className="codeOutputBlock">
+                                    <span className="codeOutputLabel">Compile output:</span>
+                                    <pre className="codeOutputContent codeOutputError">{runOutput.compile_output}</pre>
+                                </div>
+                            )}
+                            {!runOutput.stdout && !runOutput.stderr && !runOutput.compile_output && (
+                                <pre className="codeOutputContent">{JSON.stringify(runOutput, null, 2)}</pre>
+                            )}
+                        </>
+                    )}
+                </div>
             </div>
             <div id="mainPageRight">
                 <h2 className="sectionHeading">Project tasks</h2>
@@ -1058,6 +1129,7 @@ function ProjectPage(){
         };
         fetchData();
     }, [project]);
+    console.log(JSON.stringify(data));
     return (
     <div id="mainProjectPageDiv">
         <NavigationBar/>
