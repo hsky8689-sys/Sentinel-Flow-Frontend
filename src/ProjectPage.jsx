@@ -918,6 +918,7 @@ function Tasks({tasks,
         setEditingTaskId(task.id);
     };
 
+
     return (
         <div id="tasksContainer">
             {tasks.map((task)=>(
@@ -960,7 +961,7 @@ function Tasks({tasks,
         </div>
     );
 }
-function RoleSection({roleName,users,projectId}){
+function RoleSection({roleId,roleName,users,projectId,onEditClick}){
     const [permissions,setPermissions] = useState(null);
     useEffect(() => {
         if(!projectId || !roleName) return;
@@ -974,6 +975,15 @@ function RoleSection({roleName,users,projectId}){
     return (
         <div className="profileSectionBox">
             <h3 className="sectionTitle">{roleName}</h3>
+                        <button type="button"
+                    className="editBtn"
+                    onClick={()=>{
+                        console.log('roleId for',roleName,'=',roleId);
+                        onEditClick(roleId,roleName,permissions?.permissions,users);
+                    }}
+            >
+                Modify
+            </button>
             <div className="skillsGrid">
                 {(users || []).map(u => (
                     <span key={u.id} className="skillBadge">
@@ -984,7 +994,7 @@ function RoleSection({roleName,users,projectId}){
             <div className="rolePermissionsGrid">
                 {Object.entries(permissions?.permissions || {}).map(([key,value]) => (
                     <label key={key} className="rolePermissionLabel">
-                        <input type="checkbox" style={{background:'black'}}checked={!!value} disabled readOnly/>
+                        <input type="checkbox" checked={!!value} disabled readOnly/>
                         {key}
                     </label>
                 ))}
@@ -992,11 +1002,17 @@ function RoleSection({roleName,users,projectId}){
         </div>
     );
 }
-function NewRoleForm({permissionKeys,projectUsers}){
-    const [roleName,setRoleName] = useState('');
-    const [selectedPermissions,setSelectedPermissions] = useState({});
-    const [selectedUsers,setSelectedUsers] = useState([]);
-
+function NewRoleForm({permissionKeys,
+                      projectUsers,
+                      projectId,
+                      editingRoleId,
+                      setEditingRoleId,
+                      roleName,
+                      setRoleName,
+                      selectedPermissions,
+                      setSelectedPermissions,
+                      selectedUsers,
+                      setSelectedUsers}){
     const togglePermission = (key) => {
         setSelectedPermissions(prev => ({...prev, [key]: !prev[key]}));
     };
@@ -1006,18 +1022,42 @@ function NewRoleForm({permissionKeys,projectUsers}){
     const removeUser = (username) => {
         setSelectedUsers(prev => prev.filter(u => u !== username));
     };
+    const resetForm = () => {
+        setEditingRoleId(null);
+        setRoleName('');
+        setSelectedPermissions({});
+        setSelectedUsers([]);
+    };
+    const handleRoleNameChange = (value) => {
+        setRoleName(value);
+        setEditingRoleId(null);
+    };
     const handleCreateRole = () => {
         if(roleName.trim() === '') return;
-        // TODO: send create-role request to backend
+        
     };
+    const handleModifyRole = async () => {
+        if(roleName.trim() === '') return;
+        if(!editingRoleId){
+            console.error('editingRoleId is missing - roleIds[roleName] lookup likely failed, check name mismatch between staff and role_ids from backend');
+            return;
+        }
+        const response = await editProjectRole(projectId,editingRoleId,{
+            name: roleName.trim(),
+            ...selectedPermissions
+        });
+        if(response){
+            resetForm();
+        }
+    }
 
     return (
         <div className="technicalSkillInputs">
             <input type="text"
                    className="addSectionInput"
-                   placeholder="New role name..."
+                   placeholder="Role name..."
                    value={roleName}
-                   onChange={(e)=>setRoleName(e.target.value)}
+                   onChange={(e)=>handleRoleNameChange(e.target.value)}
             />
             <div className="rolePermissionsGrid">
                 {permissionKeys.map(key => (
@@ -1047,8 +1087,11 @@ function NewRoleForm({permissionKeys,projectUsers}){
                     </span>
                 ))}
             </div>
-            <button type="button" className="addBtn" onClick={handleCreateRole}>
-                Create role
+            <button type="button"
+                    className={editingRoleId === null ? "addBtn" : "editSubmitBtn"}
+                    onClick={editingRoleId === null ? handleCreateRole : handleModifyRole}
+            >
+                {editingRoleId === null ? "Create role" : "Modify role"}
             </button>
         </div>
     );
@@ -1056,14 +1099,50 @@ function NewRoleForm({permissionKeys,projectUsers}){
 function Roles({data}){
     if(!data) return null;
     const staff = data.staff || {};
+    const roleIds = data.role_ids || {};
+    console.log('staff keys:', Object.keys(staff));
+    console.log('roleIds keys:', Object.keys(roleIds));
     const permissionKeys = Object.keys(data.visitor_permissions || {});
     const projectUsers = Object.values(staff).flat().map(u=>u.username);
+
+    const [editingRoleId,setEditingRoleId] = useState(null);
+    const [roleName,setRoleName] = useState('');
+    const [selectedPermissions,setSelectedPermissions] = useState({});
+    const [selectedUsers,setSelectedUsers] = useState([]);
+
+    const handleEditClick = (roleId,currentName,currentPermissions,currentUsers) => {
+        setEditingRoleId(roleId);
+        setRoleName(currentName);
+        setSelectedPermissions(currentPermissions || {});
+        setSelectedUsers((currentUsers || []).map(u=>u.username));
+    };
+
+    console.log(Object.keys(staff)[3].length, JSON.stringify(Object.keys(staff)[3]));
+    console.log(Object.keys(roleIds)[6].length, JSON.stringify(Object.keys(roleIds)[6]));
+
     return (
         <div id="rolesContainer">
-            {Object.entries(staff).map(([roleName,users])=>(
-                <RoleSection key={roleName} roleName={roleName} users={users} projectId={data.project_id}/>
+            {Object.entries(staff).map(([roleNameKey,users])=>(
+                <RoleSection key={roleNameKey}
+                        roleId={(()=>{console.log('mapping',roleNameKey,'->',roleIds[roleNameKey]);return roleIds[roleNameKey];})()}
+                        roleName={roleNameKey}
+                        users={users}
+                        projectId={data.project_id}
+                        onEditClick={handleEditClick}
+                />
             ))}
-            <NewRoleForm permissionKeys={permissionKeys} projectUsers={projectUsers}/>
+            <NewRoleForm permissionKeys={permissionKeys}
+                         projectUsers={projectUsers}
+                         projectId={data.project_id}
+                         editingRoleId={editingRoleId}
+                         setEditingRoleId={setEditingRoleId}
+                         roleName={roleName}
+                         setRoleName={setRoleName}
+                         selectedPermissions={selectedPermissions}
+                         setSelectedPermissions={setSelectedPermissions}
+                         selectedUsers={selectedUsers}
+                         setSelectedUsers={setSelectedUsers}
+            />
         </div>
     );
 }

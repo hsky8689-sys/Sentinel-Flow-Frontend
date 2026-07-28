@@ -774,9 +774,10 @@ export async function kickUsersFromProject(projectId, usernames) {
 }
 export async function editProjectRole(projectId, roleId, updatedFields) {
     try {
+        const body = { role_id: roleId, ...updatedFields };
+        console.log(body);
         const response = await axios.patch(
-            `${BASE_URL}/projects/settings/${projectId}/roles`,
-            { role_id: roleId, ...updatedFields },
+            `${BASE_URL}/projects/settings/${projectId}/roles`,body,
             {
                 headers: { 'X-CSRFToken': searchCookie('csrftoken') },
                 withCredentials: true
