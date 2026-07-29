@@ -1165,3 +1165,51 @@ export async function editProjectDetails(projectId, updates) {
         return null;
     }
 }
+export async function editProjectRepository(projectId, repoId, updates) {
+    try {
+        const response = await axios.patch(
+            `${BASE_URL}/projects/api/${projectId}`,
+            { repo_id: repoId, ...updates },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function inviteUserToProject(projectId, username) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/invitation`,
+            { username },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function togglePushPolicy(projectId, enabled) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/push-policy`,
+            { can_only_modify_from_app: enabled },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}

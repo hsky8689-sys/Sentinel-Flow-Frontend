@@ -8,6 +8,17 @@
     box-sizing: border-box;
     gap: 20px;
 }
+.branchMergeRow {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+.branchMergeColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
+}
 #projectNavbar {
     display: flex;
     flex-direction: row;
@@ -234,6 +245,8 @@
     border-radius: 10px;
     width: 100%;
     min-height: 75vh;
+    max-height: 75vh;
+    overflow-y: auto;
     box-sizing: border-box;
     padding: 20px;
 }
@@ -426,4 +439,15 @@
     padding: 8px 12px;
     color: greenyellow;
     font-size: 0.85rem;
+}
+.branchMergeRow {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+.branchMergeColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex: 1;
 }

@@ -19,7 +19,25 @@ import { loadProjectPage,
          getFileContent,
          requestFileAccess,
          pushFilesToGithub,
-         deleteProjectRole
+         deleteProjectRole,
+         editProjectDetails,
+         getProjectRequirements,
+         addProjectSections,
+         removeProjectSections,
+         addProjectRequirements,
+         removeProjectRequirements,
+         getProjectDomains,
+         addProjectDomains,
+         removeProjectDomains,
+         addProjectRepository,
+         deleteProjectRepository,
+         editProjectRepository,
+         addProjectBranch,
+         renameProjectBranch,
+         deleteProjectBranch,
+         mergeProjectBranches,
+         inviteUserToProject,
+         togglePushPolicy
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 import Editor from "@monaco-editor/react";
@@ -544,9 +562,546 @@ function MainPage({tasks,data}){
         </div>
     );
 }
-function Settings(){
+function RequirementsSettings({data,setData}){
+    const projectId = data?.project_id;
+    const requirements = data?.requirements || {};
+    const sectionNames = Object.keys(requirements);
+
+    const [selectedSection,setSelectedSection] = useState(sectionNames[0] || '');
+    const [sectionTitle,setSectionTitle] = useState(sectionNames[0] || '');
+    const [addNewSection,setAddNewSection] = useState(false);
+    const [skills,setSkills] = useState(['']);
+
+    const refreshRequirements = async () => {
+        const response = await getProjectRequirements(projectId);
+        if(response && response.status === 'succes'){
+            setData(prev => ({...prev, requirements: response.requirements}));
+        }
+    };
+
+    const handleDeleteSkill = async (sectionName,skillName) => {
+        const response = await removeProjectRequirements(projectId,[[sectionName,skillName]]);
+        if(response && response.status === 'success'){
+            refreshRequirements();
+        }
+    };
+
+    const handleDeleteSection = async (sectionName) => {
+        const response = await removeProjectSections(projectId,[sectionName]);
+        if(response && response.status === 'succes'){
+            refreshRequirements();
+        }
+    };
+
+    const handleInputChange = (index,value) => {
+        setSkills(prev => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    };
+
+    const handleAddInput = () => {
+        if(skills.length < 5) setSkills(prev => [...prev,'']);
+    };
+
+    const handleConfirm = async () => {
+        const filledSkills = skills.filter(s=>s.trim() !== '');
+        if(filledSkills.length === 0 || sectionTitle.trim() === '') return;
+        let response;
+        if(addNewSection){
+            response = await addProjectSections(projectId,[sectionTitle]);
+            if(response && response.status === 'succes'){
+                response = await addProjectRequirements(projectId,filledSkills.map(s=>[sectionTitle,s]));
+            }
+        }else{
+            response = await addProjectRequirements(projectId,filledSkills.map(s=>[selectedSection,s]));
+        }
+        if(response && response.status === 'success'){
+            setSkills(['']);
+            setAddNewSection(false);
+            refreshRequirements();
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">Required skills</h3>
+            {Object.entries(requirements).map(([sectionName,skillsList]) => (
+                <div key={sectionName} className="techSectionBox">
+                    <span className="sectionTitleRow">
+                        <h3 className="sectionTitle">{sectionName}</h3>
+                        <button className="deleteBtn" onClick={()=>handleDeleteSection(sectionName)}>X</button>
+                    </span>
+                    <div className="skillsGrid">
+                        {(skillsList || []).map((skill,index) => {
+                            const skillName = typeof skill === 'string' ? skill : skill.skill;
+                            return (
+                                <span key={skill.id ?? index} className="skillBadge">
+                                    <span>{skillName}</span>
+                                    <button className="deleteBtn" onClick={()=>handleDeleteSkill(sectionName,skillName)}>X</button>
+                                </span>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+            <div className="techStackActions">
+                <select className="sectionSelect"
+                        value={selectedSection}
+                        onChange={(e)=>{
+                            setAddNewSection(false);
+                            setSelectedSection(e.target.value);
+                            setSectionTitle(e.target.value);
+                        }}
+                >
+                    {sectionNames.map(name=>(
+                        <option key={name} value={name}>{name}</option>
+                    ))}
+                </select>
+                <div className="technicalSkillInputs">
+                    <input type="text"
+                           placeholder="add new section..."
+                           className="addSectionInput"
+                           value={sectionTitle}
+                           onKeyDown={()=>setAddNewSection(true)}
+                           onChange={(e)=>setSectionTitle(e.target.value)}
+                    />
+                    {skills.map((skillText,index)=>(
+                        <input key={index}
+                               type="text"
+                               placeholder="add new skill to section"
+                               className="addSkillInput"
+                               value={skillText}
+                               onChange={(e)=>handleInputChange(index,e.target.value)}
+                        />
+                    ))}
+                    <span className="techActionButtons">
+                        {skills.length < 5 && (
+                            <button className="addBtn" onClick={handleAddInput}>+</button>
+                        )}
+                        <button className="addBtn" onClick={handleConfirm}>Confirm changes</button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+function DomainsSettings({data,setData}){
+    const projectId = data?.project_id;
+    const domains = data?.domains || [];
+    const [newDomains,setNewDomains] = useState(['']);
+
+    const refreshDomains = async () => {
+        const response = await getProjectDomains(projectId);
+        if(response && response.status === 'success'){
+            setData(prev => ({...prev, domains: response.domains}));
+        }
+    };
+
+    const handleDeleteDomain = async (domainName) => {
+        const response = await removeProjectDomains(projectId,[domainName]);
+        if(response && response.status === 'succes'){
+            refreshDomains();
+        }
+    };
+
+    const handleInputChange = (index,value) => {
+        setNewDomains(prev => {
+            const updated = [...prev];
+            updated[index] = value;
+            return updated;
+        });
+    };
+
+    const handleAddInput = () => {
+        if(newDomains.length < 5) setNewDomains(prev => [...prev,'']);
+    };
+
+    const handleConfirm = async () => {
+        const filled = newDomains.filter(d=>d.trim() !== '');
+        if(filled.length === 0) return;
+        const response = await addProjectDomains(projectId,filled);
+        if(response && response.status === 'succes'){
+            setNewDomains(['']);
+            refreshDomains();
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">Project domains</h3>
+            <div className="skillsGrid">
+                {domains.map((d,index)=>(
+                    <span key={d.id ?? index} className="skillBadge">
+                        <span>{d.domain}</span>
+                        <button className="deleteBtn" onClick={()=>handleDeleteDomain(d.domain)}>X</button>
+                    </span>
+                ))}
+            </div>
+            <div className="technicalSkillInputs">
+                {newDomains.map((domainText,index)=>(
+                    <input key={index}
+                           type="text"
+                           placeholder="add new domain..."
+                           className="addSkillInput"
+                           value={domainText}
+                           onChange={(e)=>handleInputChange(index,e.target.value)}
+                    />
+                ))}
+                <span className="techActionButtons">
+                    {newDomains.length < 5 && (
+                        <button className="addBtn" onClick={handleAddInput}>+</button>
+                    )}
+                    <button className="addBtn" onClick={handleConfirm}>Confirm changes</button>
+                </span>
+            </div>
+        </div>
+    );
+}
+function RepoSettings({data,setData}){
+    const projectId = data?.project_id;
+    const projectName = data?.project_name;
+    const repos = data?.repos || [];
+    const [editingRepoId,setEditingRepoId] = useState(null);
+    const [repoName,setRepoName] = useState('');
+    const [repoLink,setRepoLink] = useState('');
+    const [repoToken,setRepoToken] = useState('');
+
+    const refreshData = async () => {
+        const fresh = await loadProjectPage(projectName);
+        if(fresh){
+            setData(fresh);
+        }
+    };
+
+    const resetForm = () => {
+        setEditingRepoId(null);
+        setRepoName('');
+        setRepoLink('');
+        setRepoToken('');
+    };
+
+    const handleEditClick = (repoItem) => {
+        setEditingRepoId(repoItem.id);
+        setRepoName(repoItem.name);
+        setRepoLink(repoItem.owner && repoItem.repo ? `https://github.com/${repoItem.owner}/${repoItem.repo}` : '');
+        setRepoToken('');
+    };
+
+    const handleAddRepo = async () => {
+        if(repoName.trim() === '' || repoLink.trim() === '') return;
+        const response = await addProjectRepository(projectId,repoName.trim(),repoLink.trim(),repoToken.trim());
+        if(response && response.status === 'success'){
+            resetForm();
+            refreshData();
+        }
+    };
+
+    const handleModifyRepo = async () => {
+        const updates = {};
+        if(repoName.trim() !== '') updates.github_repo_name = repoName.trim();
+        if(repoLink.trim() !== '') updates.github_repo_link = repoLink.trim();
+        if(repoToken.trim() !== '') updates.github_token = repoToken.trim();
+        if(Object.keys(updates).length === 0) return;
+        const response = await editProjectRepository(projectId,editingRepoId,updates);
+        if(response && response.status === 'success'){
+            resetForm();
+            refreshData();
+        }
+    };
+
+    const handleDeleteRepo = async (repoId) => {
+        const response = await deleteProjectRepository(projectId,repoId);
+        if(response && response.status === 'success'){
+            if(editingRepoId === repoId) resetForm();
+            refreshData();
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">GitHub repositories</h3>
+            <div className="skillsGrid">
+                {repos.map(repoItem=>(
+                    <span key={repoItem.id} className="skillBadge">
+                        <span>{repoItem.name} ({repoItem.owner}/{repoItem.repo})</span>
+                        <button className="editBtn" onClick={()=>handleEditClick(repoItem)}>Modify</button>
+                        <button className="deleteBtn" onClick={()=>handleDeleteRepo(repoItem.id)}>X</button>
+                    </span>
+                ))}
+            </div>
+            <div className="technicalSkillInputs">
+                <input type="text"
+                       placeholder="Repo name..."
+                       className="addSectionInput"
+                       value={repoName}
+                       onChange={(e)=>setRepoName(e.target.value)}
+                />
+                <input type="text"
+                       placeholder="Repo link (https://github.com/owner/repo)..."
+                       className="addSkillInput"
+                       value={repoLink}
+                       onChange={(e)=>setRepoLink(e.target.value)}
+                />
+                <input type="text"
+                       placeholder={editingRepoId === null ? "Access token (optional)..." : "New access token (leave blank to keep current)..."}
+                       className="addSkillInput"
+                       value={repoToken}
+                       onChange={(e)=>setRepoToken(e.target.value)}
+                />
+                <button className={editingRepoId === null ? "addBtn" : "editSubmitBtn"}
+                        onClick={editingRepoId === null ? handleAddRepo : handleModifyRepo}
+                >
+                    {editingRepoId === null ? "Add repository" : "Modify repository"}
+                </button>
+            </div>
+        </div>
+    );
+}
+function BranchSettings({data}){
+    const projectId = data?.project_id;
+    const projectName = data?.project_name;
+    const repos = data?.repos || [];
+    const [selectedRepoId,setSelectedRepoId] = useState('');
+    const [branches,setBranches] = useState([]);
+    const [baseBranch,setBaseBranch] = useState('');
+    const [headBranch,setHeadBranch] = useState('');
+    const [newBranchName,setNewBranchName] = useState('');
+    const [renameTarget,setRenameTarget] = useState('');
+
+    const selectedRepo = repos.find(r => String(r.id) === String(selectedRepoId)) || null;
+
+    const refreshBranches = async () => {
+        if(!selectedRepo) return;
+        const result = await fetchRepoBranches(projectName,selectedRepo.id);
+        setBranches(result);
+        setBaseBranch(result.length > 0 ? result[0] : '');
+        setHeadBranch(result.length > 0 ? result[0] : '');
+    };
+
+    useEffect(() => {
+        if(!selectedRepo){
+            setBranches([]);
+            setBaseBranch('');
+            setHeadBranch('');
+            return;
+        }
+        let cancelled = false;
+        fetchRepoBranches(projectName,selectedRepo.id).then(result => {
+            if(!cancelled){
+                setBranches(result);
+                setBaseBranch(result.length > 0 ? result[0] : '');
+                setHeadBranch(result.length > 0 ? result[0] : '');
+            }
+        });
+        return () => { cancelled = true; };
+    }, [selectedRepo?.id]);
+
+    const handleMerge = async () => {
+        if(!baseBranch || !headBranch || !selectedRepo) return;
+        const response = await mergeProjectBranches(projectId,baseBranch,headBranch,selectedRepo.id);
+        if(response && response.status === 'success'){
+            refreshBranches();
+        }
+    };
+
+    const handleAddBranch = async () => {
+        if(!selectedRepo || newBranchName.trim() === '') return;
+        const response = await addProjectBranch(projectId,newBranchName.trim(),selectedRepo.id);
+        if(response && response.status === 'success'){
+            setNewBranchName('');
+            refreshBranches();
+        }
+    };
+
+    const handleRenameBranch = async () => {
+        if(!selectedRepo || !baseBranch || renameTarget.trim() === '') return;
+        const response = await renameProjectBranch(projectId,baseBranch,renameTarget.trim(),selectedRepo.id);
+        if(response && response.status === 'success'){
+            setRenameTarget('');
+            refreshBranches();
+        }
+    };
+
+    const handleDeleteBranch = async () => {
+        if(!selectedRepo || !baseBranch) return;
+        const response = await deleteProjectBranch(projectId,baseBranch,selectedRepo.id);
+        if(response && response.status === 'success'){
+            refreshBranches();
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">Branches</h3>
+            <select className="sectionSelect"
+                    value={selectedRepoId}
+                    onChange={(e)=>setSelectedRepoId(e.target.value)}
+            >
+                <option value="">Select a repository...</option>
+                {repos.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+            </select>
+            <div className="branchMergeRow">
+                <div className="branchMergeColumn">
+                    <span className="sectionTitle">Base</span>
+                    <select className="sectionSelect"
+                            value={baseBranch}
+                            onChange={(e)=>setBaseBranch(e.target.value)}
+                            disabled={branches.length === 0}
+                    >
+                        {branches.length === 0 && <option value="">No branches</option>}
+                        {branches.map(b => (
+                            <option key={b} value={b}>{b}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="branchMergeColumn">
+                    <span className="sectionTitle">Head</span>
+                    <select className="sectionSelect"
+                            value={headBranch}
+                            onChange={(e)=>setHeadBranch(e.target.value)}
+                            disabled={branches.length === 0}
+                    >
+                        {branches.length === 0 && <option value="">No branches</option>}
+                        {branches.map(b => (
+                            <option key={b} value={b}>{b}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            <button type="button" className="addBtn" onClick={handleMerge}>Merge</button>
+
+            <div className="technicalSkillInputs">
+                <input type="text"
+                       placeholder="New branch name..."
+                       className="addSectionInput"
+                       value={newBranchName}
+                       onChange={(e)=>setNewBranchName(e.target.value)}
+                />
+                <button type="button" className="addBtn" onClick={handleAddBranch}>Add branch</button>
+            </div>
+
+            <div className="technicalSkillInputs">
+                <input type="text"
+                       placeholder={`Rename "${baseBranch || '...'}" to...`}
+                       className="addSectionInput"
+                       value={renameTarget}
+                       onChange={(e)=>setRenameTarget(e.target.value)}
+                />
+                <button type="button" className="editSubmitBtn" onClick={handleRenameBranch}>Rename base branch</button>
+                <button type="button" className="denyBtn" onClick={handleDeleteBranch}>Delete base branch</button>
+            </div>
+        </div>
+    );
+}
+function MembersSettings({data,setData}){
+    const projectId = data?.project_id;
+    const projectName = data?.project_name;
+    const staff = data?.staff || {};
+    const allMembers = Object.values(staff).flat();
+    const [inviteUsername,setInviteUsername] = useState('');
+
+    const handleRemoveUser = async (username) => {
+        const response = await kickUsersFromProject(projectId,[username]);
+        if(response){
+            const fresh = await loadProjectPage(projectName);
+            if(fresh) setData(fresh);
+        }
+    };
+
+    const handleInviteUser = async () => {
+        if(inviteUsername.trim() === '') return;
+        const response = await inviteUserToProject(projectId,inviteUsername.trim());
+        if(response){
+            setInviteUsername('');
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">Project members</h3>
+            <div className="skillsGrid">
+                {allMembers.map(u=>(
+                    <span key={u.id} className="skillBadge">
+                        <span>{u.username}</span>
+                        <button className="deleteBtn" onClick={()=>handleRemoveUser(u.username)}>X</button>
+                    </span>
+                ))}
+            </div>
+            <div className="technicalSkillInputs">
+                <input type="text"
+                       placeholder="Search new user to invite..."
+                       className="addSectionInput"
+                       value={inviteUsername}
+                       onChange={(e)=>setInviteUsername(e.target.value)}
+                />
+                <button type="button" className="addBtn" onClick={handleInviteUser}>Invite</button>
+            </div>
+        </div>
+    );
+}
+function PushPolicySettings({data,setData}){
+    const projectId = data?.project_id;
+    const enabled = !!data?.can_only_modify_from_app;
+
+    const handleToggle = async () => {
+        const response = await togglePushPolicy(projectId,!enabled);
+        if(response){
+            setData(prev => ({...prev, can_only_modify_from_app: !enabled}));
+        }
+    };
+
+    return (
+        <div className="profileSectionBox">
+            <h3 className="sectionTitle">Push policy</h3>
+            <p className="sectionContent">Adds a webhook to all the associated github repositories which triggers the in-app verification of all detected push attempts and automatically rejects all pushes with a different access token than the one registered by the app.Note that the account which has generated that token can still push from outside the app.Changes may be reverted</p>
+            <label className="rolePermissionLabel"></label>
+            <label className="rolePermissionLabel">
+                <input type="checkbox" checked={enabled} onChange={handleToggle}/>
+                Can only modify from app
+            </label>
+        </div>
+    );
+}
+function Settings({data,setData}){
+    const [name,setName] = useState(data?.project_name || '');
+    const [description,setDescription] = useState(data?.description || '');
+
+    const handleSaveDetails = async () => {
+        const response = await editProjectDetails(data.project_id,{name,description});
+        if(response && response.status === 'success'){
+            setData(prev => ({...prev, project_name: response.name, description: response.description}));
+        }
+    };
+
     return (
         <div id="settingsContainer">
+            <div className="profileSectionBox">
+                <h3 className="sectionTitle">Project details</h3>
+                <input type="text"
+                       className="addSectionInput"
+                       placeholder="Project name..."
+                       value={name}
+                       onChange={(e)=>setName(e.target.value)}
+                />
+                <textarea className="sectionContentInput"
+                          placeholder="Project description..."
+                          value={description}
+                          onChange={(e)=>setDescription(e.target.value)}
+                />
+                <button type="button" className="editSubmitBtn" onClick={handleSaveDetails}>
+                    Save
+                </button>
+                <RequirementsSettings data={data} setData={setData}/>
+                <DomainsSettings data={data} setData={setData}/>
+                <RepoSettings data={data} setData={setData}/>
+                <BranchSettings data={data}/>
+                <MembersSettings data={data} setData={setData}/>
+                <PushPolicySettings data={data} setData={setData}/>
+            </div>
         </div>
     );
 }
@@ -1246,7 +1801,7 @@ function RenderCurrentSection({currentSection,
         case 'main':
             return <MainPage tasks={tasks} data={data}/>
         case 'settings':
-            return <Settings/>
+            return <Settings data={data} setData={setData}/>
         case 'tasks': {
             const projectUsernames = Object.values(data?.staff || {}).flat().map(u=>u.username);
             const projectRepos = data?.repos || [];
