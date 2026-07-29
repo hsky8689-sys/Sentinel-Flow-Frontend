@@ -15,7 +15,8 @@ import { accesProfilePage,
          sendFriendRequest,
          deleteFriendRequest,
          acceptFriendRequest,
-         removeFriend } from './utils/api-utlis';
+         removeFriend 
+        } from './utils/api-utlis';
 import { useRef } from 'react';
 const BASE_URL = import.meta.env.VITE_API_URL;
 function TechnicalSkillInput({isOwner,

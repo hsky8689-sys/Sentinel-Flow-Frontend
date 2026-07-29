@@ -18,7 +18,8 @@ import { loadProjectPage,
          getAvailableLanguages,
          getFileContent,
          requestFileAccess,
-         pushFilesToGithub
+         pushFilesToGithub,
+         deleteProjectRole
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 import Editor from "@monaco-editor/react";
@@ -961,7 +962,7 @@ function Tasks({tasks,
         </div>
     );
 }
-function RoleSection({roleId,roleName,users,projectId,onEditClick}){
+function RoleSection({roleId,roleName,users,projectId,onEditClick,onDeleteClick}){
     const [permissions,setPermissions] = useState(null);
     useEffect(() => {
         if(!projectId || !roleName) return;
@@ -975,14 +976,17 @@ function RoleSection({roleId,roleName,users,projectId,onEditClick}){
     return (
         <div className="profileSectionBox">
             <h3 className="sectionTitle">{roleName}</h3>
-                        <button type="button"
+            <button type="button"
                     className="editBtn"
-                    onClick={()=>{
-                        console.log('roleId for',roleName,'=',roleId);
-                        onEditClick(roleId,roleName,permissions?.permissions,users);
-                    }}
+                    onClick={()=>onEditClick(roleId,roleName,permissions?.permissions,users)}
             >
                 Modify
+            </button>
+            <button type="button"
+                    className="deleteBtn"
+                    onClick={()=>onDeleteClick(roleId,roleName)}
+            >
+                Delete
             </button>
             <div className="skillsGrid">
                 {(users || []).map(u => (
@@ -1096,12 +1100,10 @@ function NewRoleForm({permissionKeys,
         </div>
     );
 }
-function Roles({data}){
+function Roles({data,setData}){
     if(!data) return null;
     const staff = data.staff || {};
     const roleIds = data.role_ids || {};
-    console.log('staff keys:', Object.keys(staff));
-    console.log('roleIds keys:', Object.keys(roleIds));
     const permissionKeys = Object.keys(data.visitor_permissions || {});
     const projectUsers = Object.values(staff).flat().map(u=>u.username);
 
@@ -1117,18 +1119,38 @@ function Roles({data}){
         setSelectedUsers((currentUsers || []).map(u=>u.username));
     };
 
-    console.log(Object.keys(staff)[3].length, JSON.stringify(Object.keys(staff)[3]));
-    console.log(Object.keys(roleIds)[6].length, JSON.stringify(Object.keys(roleIds)[6]));
+    const handleDeleteClick = async (roleId,roleNameToDelete) => {
+        const response = await deleteProjectRole(data.project_id,roleId);
+        if(response && response.status === 'success'){
+            const demotedIds = response.demoted_to_viewer || [];
+            const deletedRoleUsers = (staff[roleNameToDelete] || []).filter(u=>demotedIds.includes(u.id));
+            setData(prev => {
+                const newStaff = {...prev.staff};
+                delete newStaff[roleNameToDelete];
+                newStaff.viewer = [...(newStaff.viewer || []), ...deletedRoleUsers];
+                const newRoleIds = {...prev.role_ids};
+                delete newRoleIds[roleNameToDelete];
+                return {...prev, staff: newStaff, role_ids: newRoleIds};
+            });
+            if(editingRoleId === roleId){
+                setEditingRoleId(null);
+                setRoleName('');
+                setSelectedPermissions({});
+                setSelectedUsers([]);
+            }
+        }
+    };
 
     return (
         <div id="rolesContainer">
             {Object.entries(staff).map(([roleNameKey,users])=>(
                 <RoleSection key={roleNameKey}
-                        roleId={(()=>{console.log('mapping',roleNameKey,'->',roleIds[roleNameKey]);return roleIds[roleNameKey];})()}
-                        roleName={roleNameKey}
-                        users={users}
-                        projectId={data.project_id}
-                        onEditClick={handleEditClick}
+                             roleId={roleIds[roleNameKey]}
+                             roleName={roleNameKey}
+                             users={users}
+                             projectId={data.project_id}
+                             onEditClick={handleEditClick}
+                             onDeleteClick={handleDeleteClick}
                 />
             ))}
             <NewRoleForm permissionKeys={permissionKeys}
@@ -1144,14 +1166,6 @@ function Roles({data}){
                          setSelectedUsers={setSelectedUsers}
             />
         </div>
-    );
-}
-function GroupChatMessage({message,currentUserId}){
-    const isOwnMessage = message.sender_id === currentUserId;
-    return (
-        <span className={`chatMessage ${isOwnMessage ? 'ownMessage' : 'otherMessage'}`}>
-            {message.content}
-        </span>
     );
 }
 function GroupChat({data}){
@@ -1205,6 +1219,7 @@ function GroupChat({data}){
 }
 function RenderCurrentSection({currentSection,
                                data,
+                               setData,
                                tasks,
                                setTasks,
                                editingTaskId,
@@ -1252,7 +1267,7 @@ function RenderCurrentSection({currentSection,
                     />
         }
         case 'roles':
-            return <Roles data={data}/>
+            return <Roles data={data} setData={setData}/>
         case 'group_chat':
             return <GroupChat data={data}/>
         default:
@@ -1287,9 +1302,9 @@ function ProjectPage(){
         <div className="mainProjectContent">
             <SectionNavbar setCurrentSection={setCurrentSection}/>
             <div className="mainProjectContent">
-                <RenderCurrentSection currentSection={currentSection}
-                                      data={data}
-                                      tasks={tasks} setTasks={setTasks}
+                                <RenderCurrentSection currentSection={currentSection}
+                                      data={data} setData={setData} tasks={tasks} 
+                                      setTasks={setTasks} setTasks={setTasks}
                                       editingTaskId={editingTaskId} setEditingTaskId={setEditingTaskId}
                                       taskName={taskName} setTaskName={setTaskName}
                                       taskDescription={taskDescription} setTaskDescription={setTaskDescription}

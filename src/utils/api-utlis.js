@@ -881,3 +881,287 @@ export async function pushFilesToGithub(projectId, owner, repo, branch, files, m
         return null;
     }
 }
+export async function deleteProjectRole(projectId, roleId) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/settings/${projectId}/roles`,
+            {
+                data: { role_id: roleId },
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function addProjectBranch(projectId, branchName = null, repoId = null) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/github/${projectId}/branches`,
+            { branch_name: branchName, repo_id: repoId },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function renameProjectBranch(projectId, branchName, newName, repoId = null) {
+    try {
+        const response = await axios.put(
+            `${BASE_URL}/projects/api/github/${projectId}/branches`,
+            { branch_name: branchName, new_name: newName, repo_id: repoId },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function deleteProjectBranch(projectId, branchName, repoId = null) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/api/github/${projectId}/branches`,
+            {
+                data: { branch_name: branchName, repo_id: repoId },
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function mergeProjectBranches(projectId, base, head, repoId = null) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/github/${projectId}/merges`,
+            { base, head, repo_id: repoId },
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function deleteProject(projectId) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/${projectId}/delete`,
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getProjectRequirements(projectId) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/settings/${projectId}/requirements`,
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function addProjectSections(projectId, sectionNames) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/requirement-sections`,
+            { newSections: sectionNames },
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function removeProjectSections(projectId, sectionNames) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/settings/${projectId}/requirement-sections`,
+            { data: { removedSections: sectionNames }, headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function addProjectRequirements(projectId, requirements) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/requirements`,
+            { newRequirements: requirements },
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function removeProjectRequirements(projectId, requirements) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/settings/${projectId}/requirements`,
+            { data: { removedRequirements: requirements }, headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getProjectDomains(projectId) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/settings/${projectId}/domains`,
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function addProjectDomains(projectId, domains) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/domains`,
+            { newDomains: domains },
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function removeProjectDomains(projectId, domains) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/settings/${projectId}/domains`,
+            { data: { removedDomains: domains }, headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function addProjectRepository(projectId, githubRepoName, githubRepoLink, githubToken = '') {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/api/${projectId}`,
+            { github_repo_name: githubRepoName, github_repo_link: githubRepoLink, github_token: githubToken },
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function deleteProjectRepository(projectId, repoId) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/api/${projectId}`,
+            { data: { repo_id: repoId }, headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getRepoBranches(projectName, repoId = null) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/api/github/branches`,
+            { params: { project: projectName, repo_id: repoId }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function getProjectPushPolicy(projectId) {
+    try {
+        const response = await axios.get(
+            `${BASE_URL}/projects/settings/${projectId}/push-policy`,
+            { withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function setProjectPushPolicy(projectId, enabled) {
+    try {
+        const response = await axios.post(
+            `${BASE_URL}/projects/settings/${projectId}/push-policy`,
+            { can_only_modify_from_app: enabled },
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function clearFlaggedExternalPush(projectId) {
+    try {
+        const response = await axios.delete(
+            `${BASE_URL}/projects/settings/${projectId}/push-policy`,
+            { headers: { 'X-CSRFToken': searchCookie('csrftoken') }, withCredentials: true }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
+export async function editProjectDetails(projectId, updates) {
+    try {
+        const response = await axios.patch(
+            `${BASE_URL}/projects/settings/${projectId}/details`,
+            updates,
+            {
+                headers: { 'X-CSRFToken': searchCookie('csrftoken') },
+                withCredentials: true
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
+}
