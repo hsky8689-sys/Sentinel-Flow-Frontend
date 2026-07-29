@@ -64,6 +64,27 @@
     color: green;
     border: 1px solid green;
 }
+.groupChatMessageWrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+}
+.groupChatMessageWrapper.ownMessage {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+.groupChatMessageWrapper.otherMessage {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+.groupChatMessageWrapper .chatMessage {
+    max-width: 100%;
+}
+.groupChatMessageSender {
+    font-size: 0.75rem;
+    color: green;
+    padding: 0 4px;
+}
 #messageInputRow {
     display: flex;
     gap: 10px;

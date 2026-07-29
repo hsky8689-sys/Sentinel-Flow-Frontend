@@ -77,6 +77,7 @@ function ChatPage(){
     const [newMessage,setNewMessage] = useState('');
     const [currentUserId,setCurrentUserId] = useState(null);
     const [pageNumber,setPageNumber] = useState(0);
+    const [messagePageNumber,setMessagePageNumber] = useState(1);
     const [hasMoreConversations,setHasMoreConversations] = useState(true);
     const [isLoadingMore,setIsLoadingMore] = useState(false);
 
@@ -148,7 +149,8 @@ function ChatPage(){
     const handleSelectConversation = async (id) => {
         setSelectedConversationId(id);
         setMessages([]);
-        const content = await loadChatMessages(id,pageNumber,PAGE_SIZE);
+        setMessagePageNumber(1);
+        const content = await loadChatMessages(id,1,PAGE_SIZE);
         if(content){
             setMessages(content);
         }

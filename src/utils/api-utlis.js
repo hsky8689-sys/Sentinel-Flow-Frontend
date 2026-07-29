@@ -475,7 +475,6 @@ export async function declineMoveFileAccessRequest(senderId, receiverId){
     }
     return false;
 }
-// --- Deschidere / rezolvare conversație ---
 export async function openChatRoom(convId = null, user1o1 = null){
     try{
         const params = new URLSearchParams();
@@ -484,26 +483,22 @@ export async function openChatRoom(convId = null, user1o1 = null){
         const url = `${BASE_URL}/chat/?${params.toString()}`;
         const response = await axios.get(url,{withCredentials:true});
         return response.data.status === 'success' ? response.data : null;
-        // -> {chat_id, user_101, user_id} ; chat_id === -1 inseamna ca nu exista inca conversatie
     }catch(error){
         console.log(`Could not open chat room because of error ${error}`);
     }
     return null;
 }
-// --- Istoricul mesajelor unei conversatii ---
 export async function loadChatMessages(conversationId, pageNumber, pageSize){
     try{
         const url = `${BASE_URL}/chat/api/${conversationId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
         const response = await axios.get(url,{withCredentials:true});
+        console.log(response.data);
         return response.data.success ? response.data.content : null;
-        // -> [{sender_id, content, timestamp}, ...]
     }catch(error){
         console.log(`Could not load chat messages because of error ${error}`);
     }
     return null;
 }
-
-// --- Trimitere mesaj (salveaza in DB SI trimite pe websocket) ---
 export async function sendMessage(content, conversationId = null, user1o1 = null){
     try{
         const cookie = searchCookie('csrftoken');
@@ -522,20 +517,16 @@ export async function sendMessage(content, conversationId = null, user1o1 = null
     }
     return null;
 }
-
-// --- Conversatii de grup pe proiect ---
 export async function loadProjectConversations(projectId, pageNumber, pageSize){
     try{
         const url = `${BASE_URL}/chat/conversations/projects/${projectId}?pageNumber=${pageNumber}&pageSize=${pageSize}`;
         const response = await axios.get(url,{withCredentials:true});
         return response.data.success ? response.data.content : null;
-        // -> [{id, last_message, is_group}, ...]
     }catch(error){
         console.log(`Could not load project conversations because of error ${error}`);
     }
     return null;
 }
-
 export async function createProjectGroupConversation(projectId, memberIds){
     try{
         const cookie = searchCookie('csrftoken');
@@ -552,7 +543,6 @@ export async function createProjectGroupConversation(projectId, memberIds){
     }
     return null;
 }
-
 export async function deleteProjectConversation(projectId, conversationId){
     try{
         const cookie = searchCookie('csrftoken');

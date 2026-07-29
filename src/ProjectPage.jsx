@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavigationBar } from "./ProfilePage";
 import { useParams } from "react-router-dom";
 import { loadProjectPage,
@@ -37,7 +37,10 @@ import { loadProjectPage,
          deleteProjectBranch,
          mergeProjectBranches,
          inviteUserToProject,
-         togglePushPolicy
+         togglePushPolicy,
+         loadProjectConversations,
+         loadChatMessages,
+         sendMessage
           } from "./utils/api-utlis";
 import './assets/css/projectPage.css';
 import Editor from "@monaco-editor/react";
@@ -1723,51 +1726,160 @@ function Roles({data,setData}){
         </div>
     );
 }
+const GROUP_CHAT_PAGE_SIZE = 20;
+
+function GroupChatMessage({message,currentUserId,displayName}){
+    const isOwnMessage = String(message.sender_id) === String(currentUserId);
+    return (
+        <div className={`groupChatMessageWrapper ${isOwnMessage ? 'ownMessage' : 'otherMessage'}`}>
+            <span className="groupChatMessageSender">{displayName}</span>
+            <span className={`chatMessage ${isOwnMessage ? 'ownMessage' : 'otherMessage'}`}>
+                {message.content}
+            </span>
+        </div>
+    );
+}
 function GroupChat({data}){
+    const projectId = data?.project_id;
+    const currentUserId = data?.user_id ?? null;
+    const userIdToUsername = {};
+    Object.values(data?.staff || {}).flat().forEach(u => { userIdToUsername[u.id] = u.username; });
+
+    const [conversations,setConversations] = useState([]);
+    const [selectedConversationId,setSelectedConversationId] = useState(null);
     const [messages,setMessages] = useState([]);
     const [newMessage,setNewMessage] = useState('');
-    const currentUserId = data?.user_id ?? null;
+    const [pageNumber,setPageNumber] = useState(0);
+    const [messagePageNumber,setMessagePageNumber] = useState(0);
+    const [hasMoreConversations,setHasMoreConversations] = useState(true);
+    const [isLoadingMore,setIsLoadingMore] = useState(false);
+
+    const fetchConversations = async (page) => {
+        if(!hasMoreConversations || isLoadingMore) return;
+        setIsLoadingMore(true);
+        const content = await loadProjectConversations(projectId,page,GROUP_CHAT_PAGE_SIZE);
+        if(!content){
+            setIsLoadingMore(false);
+            return;
+        }
+        if(content.length === 0){
+            setHasMoreConversations(false);
+            setIsLoadingMore(false);
+            return;
+        }
+        setConversations(prev => {
+            const merged = page === 0 ? content : [...prev, ...content];
+            return [...merged].sort((a,b) => new Date(b.last_message) - new Date(a.last_message));
+        });
+        setIsLoadingMore(false);
+    };
 
     useEffect(() => {
-        // TODO: fetch messages for this project's group conversation and setMessages(...)
-    }, [data?.project_id]);
+        if(projectId) fetchConversations(pageNumber);
+    }, [projectId]);
 
-    const handleSend = () => {
-        if(newMessage.trim() === '') return;
-        const newMsg = {
-            id: Date.now(),
-            sender_id: currentUserId,
-            content: newMessage.trim()
-        };
-        setMessages(prev => [...prev, newMsg]);
-        setNewMessage('');
-        // TODO: send the message to the backend for this project's group conversation
+    const handleConversationsScroll = (e) => {
+        const el = e.target;
+        const reachedBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 5;
+        if(reachedBottom && hasMoreConversations && !isLoadingMore){
+            const nextPage = pageNumber + 1;
+            setPageNumber(nextPage);
+            fetchConversations(nextPage);
+        }
     };
+
+    const selectedConversation = conversations.find(c => c.id === selectedConversationId) || null;
+
+    const handleSelectConversation = async (id) => {
+        setSelectedConversationId(id);
+        setMessages([]);
+        const content = await loadChatMessages(id,messagePageNumber,GROUP_CHAT_PAGE_SIZE);
+        if(content){
+            setMessages(content);
+        }
+    };
+
+    const handleSend = async () => {
+        if(newMessage.trim() === '' || !selectedConversation) return;
+        const content = newMessage.trim();
+        setNewMessage('');
+        await sendMessage(content,selectedConversationId);
+    };
+
+    const selectedConversationIdRef = useRef(null);
+    useEffect(() => {
+        selectedConversationIdRef.current = selectedConversationId;
+    }, [selectedConversationId]);
+
+    useEffect(() => {
+        if(!projectId) return;
+        const socket = new WebSocket(`${import.meta.env.VITE_API_URL.replace(/^http/, 'ws')}/ws/project-chat/${projectId}/`);
+        socket.onmessage = (event) => {
+            const payload = JSON.parse(event.data);
+            if(payload.event !== 'new_message') return;
+            if(String(payload.conversation_id) === String(selectedConversationIdRef.current)){
+                setMessages(prev => [...prev, payload]);
+            }else{
+                setConversations(prev => {
+                    const updated = prev.map(c =>
+                        String(c.id) === String(payload.conversation_id)
+                            ? {...c, last_message: payload.timestamp}
+                            : c
+                    );
+                    return [...updated].sort((a,b) => new Date(b.last_message) - new Date(a.last_message));
+                });
+            }
+        };
+        return () => {
+            socket.close();
+        };
+    }, [projectId]);
+
+    const messagesEndRef = useRef(null);
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({behavior:'smooth'});
+    }, [messages]);
 
     return (
         <div id="chatContainer">
             <div id="conversationView">
-                <div id="conversationViewHeader">
-                    <span className="conversationViewName">{data?.project_name} conversation</span>
-                </div>
-                <div id="messagesArea">
-                    {messages.map((message)=>(
-                        <GroupChatMessage key={message.id} message={message} currentUserId={currentUserId}/>
-                    ))}
-                </div>
-                <div id="messageInputRow">
-                    <textarea id="messageInput"
-                              value={newMessage}
-                              onChange={(e)=>setNewMessage(e.target.value)}
-                              placeholder="Type a message..."
-                    />
-                    <button type="button" id="sendMessageBtn" onClick={handleSend}>Send</button>
-                </div>
+                {!selectedConversation ? (
+                    <p className="noConversationSelected">Select a conversation</p>
+                ) : (
+                    <>
+                        <div id="conversationViewHeader">
+                            <span className="conversationViewName">{data?.project_name} group conversation</span>
+                        </div>
+                        <div id="messagesArea">
+                            {messages.map((message,index)=>(
+                                <GroupChatMessage key={message.id ?? index}
+                                                   message={message}
+                                                   currentUserId={currentUserId}
+                                                   displayName={message.sender_name ?? userIdToUsername[message.sender_id] ?? 'Unknown'}
+                                />
+                            ))}
+                            <div ref={messagesEndRef}/>
+                        </div>
+                        <div id="messageInputRow">
+                            <textarea id="messageInput"
+                                      value={newMessage}
+                                      onChange={(e)=>setNewMessage(e.target.value)}
+                                      placeholder="Type a message..."
+                            />
+                            <button type="button" id="sendMessageBtn" onClick={handleSend}>Send</button>
+                        </div>
+                    </>
+                )}
             </div>
-            <div id="conversationsList">
-                <div className="conversationHeaderItem activeConversation">
-                    <span className="conversationHeaderName">{data?.project_name} group chat</span>
-                </div>
+            <div id="conversationsList" onScroll={handleConversationsScroll}>
+                {conversations.map(conversation=>(
+                    <div key={conversation.id}
+                         className={`conversationHeaderItem${conversation.id === selectedConversationId ? ' activeConversation' : ''}`}
+                         onClick={()=>handleSelectConversation(conversation.id)}
+                    >
+                        <span className="conversationHeaderName">{data?.project_name} group conversation</span>
+                    </div>
+                ))}
             </div>
         </div>
     );
@@ -1850,7 +1962,6 @@ function ProjectPage(){
         };
         fetchData();
     }, [project]);
-    console.log(JSON.stringify(data));
     return (
     <div id="mainProjectPageDiv">
         <NavigationBar/>
