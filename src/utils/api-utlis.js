@@ -580,6 +580,7 @@ export async function loadUserConversations(pageNumber, pageSize){
             },
             withCredentials:true
         });
+        console.log(JSON.stringify(response.data));
         return response.data.success ? response.data : null;
     }catch(error){
         console.log(`Could not load conversations because of error ${error}`);
